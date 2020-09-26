@@ -1,8 +1,6 @@
 package posidon.potassium.net
 
 import posidon.potassium.Console
-import posidon.potassium.content.Block
-import posidon.potassium.content.Material
 import posidon.potassium.loop
 import posidon.potassium.net.packets.Packet
 import posidon.potassium.print

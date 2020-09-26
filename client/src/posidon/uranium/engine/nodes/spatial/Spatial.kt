@@ -9,7 +9,7 @@ open class Spatial(
 
     val transform = Transform(Vec3f.zero())
 
-    val position get() = transform.position
+    inline val position get() = transform.position
 
     val globalTransform: Transform
         get() = if (parent is Spatial) {

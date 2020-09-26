@@ -12,7 +12,7 @@ abstract class Mesh {
 
     protected var vboIdList = ArrayList<Int>()
 
-    fun getVbo(i: Int): Int = vboIdList[i]
+    abstract val indexVbo: Int
 
     fun delete() {
         GL20.glDisableVertexAttribArray(0)
@@ -20,5 +20,10 @@ abstract class Mesh {
         for (vboId in vboIdList) GL15.glDeleteBuffers(vboId)
         GL30.glBindVertexArray(0)
         GL30.glDeleteVertexArrays(vaoId)
+    }
+
+    fun bind() {
+        GL30.glBindVertexArray(vaoId)
+        GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, indexVbo)
     }
 }

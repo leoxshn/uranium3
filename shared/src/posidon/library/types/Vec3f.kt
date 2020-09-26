@@ -5,8 +5,8 @@ import kotlin.math.sqrt
 
 data class Vec3f(var x: Float, var y: Float, var z: Float) {
 
-    fun set(v: Vec3f) = set(v.x, v.y, v.z)
-    fun set(x: Float, y: Float, z: Float) {
+    inline fun set(v: Vec3f) = set(v.x, v.y, v.z)
+    inline fun set(x: Float, y: Float, z: Float) {
         this.x = x
         this.y = y
         this.z = z
@@ -20,7 +20,7 @@ data class Vec3f(var x: Float, var y: Float, var z: Float) {
 
     override fun hashCode() = Objects.hash(x, y, z)
     override fun toString() = "vec3f($x, $y, $z)"
-    fun toVec3i() = Vec3i(x.toInt(), y.toInt(), z.toInt())
+    inline fun toVec3i() = Vec3i(x.toInt(), y.toInt(), z.toInt())
 
     companion object {
         fun blend(v1: Vec3f, v2: Vec3f, ratio: Float): Vec3f {
@@ -31,20 +31,20 @@ data class Vec3f(var x: Float, var y: Float, var z: Float) {
             return Vec3f(r, g, b)
         }
 
-        fun zero() = Vec3f(0f, 0f, 0f)
+        inline fun zero() = Vec3f(0f, 0f, 0f)
     }
 
-    operator fun plus(other: Vec3f) =
+    inline operator fun plus(other: Vec3f) =
         Vec3f(x + other.x, y + other.y, z + other.z)
-    operator fun minus(other: Vec3f) =
+    inline operator fun minus(other: Vec3f) =
         Vec3f(x - other.x, y - other.y, z - other.z)
-    operator fun times(other: Vec3f) =
+    inline operator fun times(other: Vec3f) =
         Vec3f(x * other.x, y * other.y, z * other.z)
-    operator fun times(other: Float) = Vec3f(x * other, y * other, z * other)
-    operator fun div(other: Vec3f) =
+    inline operator fun times(other: Float) = Vec3f(x * other, y * other, z * other)
+    inline operator fun div(other: Vec3f) =
         Vec3f(x / other.x, y / other.y, z / other.z)
-    operator fun div(float: Float) = Vec3f(x / float, y / float, z / float)
-    val length get() = sqrt(x * x + y * y + (z * z).toDouble()).toFloat()
-    fun normalize() = if (length == 0f) Vec3f(0f, 0f, 0f) else this / length
-    fun dot(other: Vec3f) = x * other.x + y * other.y + z * other.z
+    inline operator fun div(float: Float) = Vec3f(x / float, y / float, z / float)
+    inline val length get() = sqrt(x * x + y * y + (z * z).toDouble()).toFloat()
+    inline fun normalize() = if (length == 0f) Vec3f(0f, 0f, 0f) else this / length
+    inline fun dot(other: Vec3f) = x * other.x + y * other.y + z * other.z
 }

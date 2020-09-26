@@ -1,22 +1,17 @@
 package posidon.uranium.engine.nodes.spatial
 
 import org.lwjgl.glfw.GLFW
-import posidon.uranium.net.Client
-import posidon.uranium.engine.input.Input
-import posidon.uranium.engine.Window
-import posidon.uranium.net.packets.MovPacket
 import posidon.library.types.Matrix4f
 import posidon.library.types.Vec2f
 import posidon.library.types.Vec3i
-import posidon.library.util.Compressor
-import posidon.library.util.newLineUnescape
-import posidon.uranium.engine.graphics.Renderer
+import posidon.uranium.engine.Window
+import posidon.uranium.engine.input.Input
 import posidon.uranium.engine.input.events.Event
 import posidon.uranium.engine.input.events.MouseMovedEvent
 import posidon.uranium.engine.input.events.PacketReceivedEvent
-import posidon.uranium.engine.nodes.RootNode
 import posidon.uranium.engine.nodes.spatial.voxel.Chunk
-import posidon.uranium.main.Globals
+import posidon.uranium.net.Client
+import posidon.uranium.net.packets.MovPacket
 import kotlin.math.cos
 import kotlin.math.max
 import kotlin.math.sin
@@ -30,7 +25,7 @@ class Camera(
     var jumpHeight = 0.4f
     var sensitivity = 0.4f
 
-    var viewMatrix: Matrix4f = Matrix4f.view(position, rotation)
+    var viewMatrix: Matrix4f = Matrix4f.view(globalTransform.position, rotation)
 
     private var velocity = Vec2f(0f, 0f)
     private val oldVelocity = Vec2f(0f, 0f)
@@ -136,7 +131,6 @@ class Camera(
                             }
                         }
                     }
-                    "" -> Globals.running = false
                 }
             }
         }

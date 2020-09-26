@@ -1,12 +1,10 @@
 package posidon.potassium.net
 
 import posidon.potassium.Console
-import kotlin.math.cos
-import kotlin.math.sin
 
 object ReceivedPacketHandler {
     operator fun invoke(player: Player, packet: String) { try {
-        val tokens = packet.split('&');
+        val tokens = packet.split('&')
         when (tokens[0]) {
             "mov" -> {
                 val coords = tokens[1].split(',')

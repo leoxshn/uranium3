@@ -14,6 +14,8 @@ class SimpleMesh(
     uv: FloatArray
 ) : Mesh() {
 
+    override val indexVbo get() = vboIdList[2]
+
     init {
         var posBuffer: FloatBuffer? = null
         var textCoordsBuffer: FloatBuffer? = null

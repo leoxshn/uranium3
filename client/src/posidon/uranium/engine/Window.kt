@@ -1,12 +1,11 @@
 package posidon.uranium.engine
 
 import org.lwjgl.glfw.GLFW
-import org.lwjgl.glfw.GLFWWindowSizeCallback
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL11
 import posidon.library.types.Matrix4f
+import posidon.library.types.Vec3f
 import posidon.uranium.engine.input.Input
-import posidon.uranium.main.Globals
 
 object Window {
 
@@ -83,8 +82,9 @@ object Window {
         }
     }
 
+    val backgroundColor = Vec3f(0f, 0f, 0f)
     fun update() {
-        GL11.glClearColor(Globals.skyColor.x, Globals.skyColor.y, Globals.skyColor.z, 1.0f)
+        GL11.glClearColor(backgroundColor.x, backgroundColor.y, backgroundColor.z, 1.0f)
         GL11.glClear(GL11.GL_COLOR_BUFFER_BIT or GL11.GL_DEPTH_BUFFER_BIT)
         GLFW.glfwPollEvents()
     }

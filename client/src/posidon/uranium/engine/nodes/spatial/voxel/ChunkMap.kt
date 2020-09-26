@@ -1,8 +1,6 @@
 package posidon.uranium.engine.nodes.spatial.voxel
 
 import org.lwjgl.opengl.GL11
-import org.lwjgl.opengl.GL15
-import org.lwjgl.opengl.GL30
 import posidon.library.types.Vec3i
 import posidon.library.util.Compressor
 import posidon.library.util.newLineUnescape
@@ -12,11 +10,11 @@ import posidon.uranium.engine.graphics.Renderer
 import posidon.uranium.engine.graphics.Shader
 import posidon.uranium.engine.input.events.Event
 import posidon.uranium.engine.input.events.PacketReceivedEvent
+import posidon.uranium.engine.nodes.Environment
 import posidon.uranium.engine.nodes.Node
 import posidon.uranium.engine.nodes.RootNode
 import posidon.uranium.engine.nodes.spatial.Camera
 import posidon.uranium.engine.nodes.spatial.Spatial
-import posidon.uranium.main.Globals
 import posidon.uranium.net.ReceivedPacketHandler
 import java.util.concurrent.ConcurrentHashMap
 
@@ -25,7 +23,9 @@ class ChunkMap(name: String) : Node(name) {
     companion object {
         var blockShader = Shader("/shaders/blockVertex.shade", "/shaders/blockFragment.shade")
 
-        inline val init get() = blockShader::create
+        fun init() {
+            blockShader.create()
+        }
     }
 
     private val map = ConcurrentHashMap<Vec3i, Chunk>()
@@ -37,15 +37,14 @@ class ChunkMap(name: String) : Node(name) {
 
     override fun render(renderer: Renderer, camera: Camera) {
         blockShader.bind()
-        blockShader["ambientLight"] = Globals.ambientLight
+        blockShader["ambientLight"] = Environment.ambientLight
         blockShader["view"] = camera.viewMatrix
         BlockTextures.sheet.bind()
         for (chunkPos in map.keys) {
             val chunk = map[chunkPos]!!
             if (chunk.willBeRendered && camera.isPositionInFov(chunkPos * Chunk.SIZE)) {
                 blockShader["position"] = (chunk.position * Chunk.SIZE).toVec3f()
-                GL30.glBindVertexArray(chunk.mesh!!.vaoId)
-                GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, chunk.mesh!!.getVbo(2))
+                chunk.mesh!!.bind()
                 GL11.glDrawElements(GL11.GL_TRIANGLES, chunk.mesh!!.vertexCount, GL11.GL_UNSIGNED_INT, 0)
             }
         }
@@ -54,7 +53,7 @@ class ChunkMap(name: String) : Node(name) {
     override fun update(delta: Double) {
         Renderer.runOnMainThread {
             blockShader.bind()
-            blockShader["skyColor"] = Globals.skyColor
+            blockShader["skyColor"] = Environment.skyColor
             blockShader["projection"] = Window.projectionMatrix
         }
 
@@ -82,10 +81,12 @@ class ChunkMap(name: String) : Node(name) {
 
     override fun onEvent(event: Event) {
         if (event is PacketReceivedEvent) {
-            val blocks = Compressor.decompressString(event.packet.substring(7 + event.tokens[1].length).newLineUnescape())
-            val coords = event.tokens[1].substring(7).split(',')
-            val chunkPos = Vec3i(coords[0].toInt(), coords[1].toInt(), coords[2].toInt())
-            this[chunkPos] = blocks
+            if (event.tokens[0] == "chunk") {
+                val blocks = Compressor.decompressString(event.packet.substring(7 + event.tokens[1].length).newLineUnescape())
+                val coords = event.tokens[1].substring(7).split(',')
+                val chunkPos = Vec3i(coords[0].toInt(), coords[1].toInt(), coords[2].toInt())
+                this[chunkPos] = blocks
+            }
         }
     }
 

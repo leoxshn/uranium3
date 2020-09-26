@@ -5,7 +5,8 @@ import kotlin.math.sqrt
 
 data class Vec3i(var x: Int, var y: Int, var z: Int) {
 
-    operator fun set(x: Int, y: Int, z: Int) {
+    inline fun set(v: Vec3i) = set(v.x, v.y, v.z)
+    inline fun set(x: Int, y: Int, z: Int) {
         this.x = x
         this.y = y
         this.z = z
@@ -20,6 +21,10 @@ data class Vec3i(var x: Int, var y: Int, var z: Int) {
     override fun hashCode() = Objects.hash(x, y, z)
     override fun toString() = "vec3i($x, $y, $z)"
     inline fun toVec3f() = Vec3f(x.toFloat(), y.toFloat(), z.toFloat())
+
+    companion object {
+        inline fun zero() = Vec3i(0, 0, 0)
+    }
 
     inline operator fun plus(other: Vec3i) =
         Vec3i(x + other.x, y + other.y, z + other.z)

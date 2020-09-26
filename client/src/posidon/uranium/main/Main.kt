@@ -8,46 +8,41 @@ import posidon.uranium.content.World
 import posidon.uranium.engine.nodes.RootNode
 import posidon.uranium.engine.nodes.spatial.Camera
 import posidon.uranium.engine.nodes.spatial.voxel.ChunkMap
-import posidon.uranium.engine.nodes.ui.HotBar
-import posidon.uranium.engine.nodes.ui.LoadingScreen
+import posidon.uranium.engine.nodes.ui.LoadingScreenComponent
+import posidon.uranium.engine.nodes.ui.UIComponent
 import kotlin.concurrent.thread
 
 fun main(args: Array<String>) {
     ////START/////////////////////////////////////
     Window.init(800, 600)
+
     Renderer.init()
+
     ChunkMap.init()
-    val loadingScreen = LoadingScreen()
-    Window.update()
-    Renderer.renderUI()
-    Window.swapBuffers()
-    if (!Client.start("localhost", 2512)) {
-        loadingScreen.setBackgroundPath("res/textures/ui/couldnt_connect.png")
-        while (Window.isOpen) {
-            Window.update()
-            Renderer.renderUI()
-            Window.swapBuffers()
-        }
-        Globals.kill()
-    }
+    UIComponent.init()
+
+    Renderer.camera = Camera("cam")
+
+    val loading = LoadingScreenComponent("loadingScreen")
+    RootNode.setScene(loading)
+
     BlockTextures.init(null)
 
-    RootNode.setScene(World())
-
-    thread {
-        var lastTime = System.nanoTime()
-        var delta = 0.0
-        while (Globals.running) {
-            val now = System.nanoTime()
-            delta += (now - lastTime) / Globals.ns
-            lastTime = now
-            while (delta >= 1) {
-                Globals.tick()
-                delta--
-            }
+    Client.start("localhost", 2512) {
+        if (!it) Renderer.runOnMainThread {
+            loading.setBackgroundPath("res/textures/ui/couldnt_connect.png")
+        }
+        else Renderer.runOnMainThread {
+            val world = World()
+            RootNode.setScene(world)
+            loading.destroy()
+            Renderer.camera!!.destroy()
+            Renderer.camera = world.camera
         }
     }
 
+
+    ////UPDATES///////////////////////////////////
     thread {
         var lastTime = System.nanoTime()
         var delta = 0.0
@@ -57,26 +52,23 @@ fun main(args: Array<String>) {
             lastTime = now
             if (delta >= 0.01) {
                 RootNode.update(delta)
-                Renderer.chunks.update(delta)
                 delta = 0.0
             }
         }
     }
 
+
+    ////RENDER////////////////////////////////////
     var lastTime = System.nanoTime()
     var delta = 0.0
-    loadingScreen.visible = false
-    ////GUI///////////////////////////////////////
-    HotBar()
-    ////LOOP//////////////////////////////////////
-    val camera = RootNode["World/camera"] as Camera
+
     while (Window.isOpen && Globals.running) {
         val now = System.nanoTime()
         delta += (now - lastTime) / Globals.ns
         lastTime = now
 
         Window.update()
-        Renderer.render(camera)
+        Renderer.render()
         Window.swapBuffers()
 
         if (delta > 9) {
@@ -84,6 +76,8 @@ fun main(args: Array<String>) {
             delta = 0.0
         }
     }
+
+
     ////END///////////////////////////////////////
     Globals.kill()
 }

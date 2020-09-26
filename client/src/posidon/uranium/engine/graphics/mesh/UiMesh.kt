@@ -13,9 +13,10 @@ class UiMesh(
     indices: IntArray
 ) : Mesh() {
 
+    override val indexVbo get() = vboIdList[1]
+
     init {
         var posBuffer: FloatBuffer? = null
-        var textCoordsBuffer: FloatBuffer? = null
         var indicesBuffer: IntBuffer? = null
         try {
             vertexCount = indices.size
@@ -42,7 +43,6 @@ class UiMesh(
             //GL30.glBindVertexArray(0)
         } finally {
             if (posBuffer != null) MemoryUtil.memFree(posBuffer)
-            if (textCoordsBuffer != null) MemoryUtil.memFree(textCoordsBuffer)
             if (indicesBuffer != null) MemoryUtil.memFree(indicesBuffer)
         }
     }
