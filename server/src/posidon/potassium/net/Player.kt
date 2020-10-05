@@ -7,6 +7,7 @@ import posidon.potassium.net.packets.BlockDictionaryPacket
 import posidon.potassium.net.packets.Packet
 import posidon.potassium.print
 import posidon.library.types.Vec3i
+import posidon.potassium.world.World
 import java.io.*
 import java.net.Socket
 import java.net.SocketException
@@ -44,6 +45,13 @@ class Player(private val socket: Socket) : Thread(socket.inetAddress.hostAddress
         catch (e: Exception) { e.print() }
     }
 
+    var world: World? = null
+        set(value) {
+            field?.players?.remove(this)
+            field = value
+            field?.players?.add(this)
+        }
+
     override fun run() {
         try {
             var tmp = ""
@@ -55,7 +63,7 @@ class Player(private val socket: Socket) : Thread(socket.inetAddress.hostAddress
             playerName = packet[1]
             id = packet[2].hashCode()
             Players.add(this)
-            Worlds.earthWorld.players.add(this)
+            world = Worlds.earthWorld
             Console.beforeCmdLine {
                 Console.printInfo(playerName!!, " joined the server")
             }
@@ -87,17 +95,16 @@ class Player(private val socket: Socket) : Thread(socket.inetAddress.hostAddress
     }
 
     fun disconnect() {
-        running = false
-        try {
-            output.close()
-            input.close()
-            socket.close()
-        } catch (ignore: Exception) {}
-        Players.remove(id)
+        destroy()
         Console.beforeCmdLine { Console.printInfo(playerName!!, " left the server") }
     }
 
     fun kick() {
+        destroy()
+        Console.printInfo(playerName!!, " left the server")
+    }
+
+    fun destroy() {
         running = false
         try {
             output.close()
@@ -105,6 +112,6 @@ class Player(private val socket: Socket) : Thread(socket.inetAddress.hostAddress
             socket.close()
         } catch (ignore: Exception) {}
         Players.remove(id)
-        Console.printInfo(playerName!!, " left the server")
+        world = null
     }
 }

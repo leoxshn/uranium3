@@ -5,16 +5,16 @@ import posidon.potassium.net.packets.ChunkPacket
 import posidon.potassium.running
 import posidon.library.types.Vec3i
 import posidon.potassium.world.gen.WorldGenerator
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.locks.ReentrantLock
 import kotlin.math.roundToInt
 
 abstract class World : Runnable {
+
     abstract val name: String
     protected abstract val generator: WorldGenerator
     protected val chunks = ChunkMap()
-    val players = ArrayList<Player>()
-    val playersLock = ReentrantLock()
+    val players = ConcurrentLinkedQueue<Player>()
 
     final override fun run() {
         var lastTime: Long = System.nanoTime()
@@ -32,7 +32,7 @@ abstract class World : Runnable {
                     val xx = (player.position.x / Chunk.SIZE).roundToInt()
                     val yy = (player.position.y / Chunk.SIZE).roundToInt()
                     val zz = (player.position.z / Chunk.SIZE).roundToInt()
-                    for (x in -3..3) for (y in -2..2) for (z in -3..3) {
+                    for (x in -8..8) for (y in -8..8) for (z in -8..8) {
                         val chunkX = xx + x
                         val chunkY = yy + y
                         val chunkZ = zz + z
