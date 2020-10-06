@@ -4,6 +4,7 @@
     <exclude-output />
     <content url="file://$MODULE_DIR$/../uranium">
       <sourceFolder url="file://$MODULE_DIR$/../uranium/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../uranium/res" type="java-resource" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

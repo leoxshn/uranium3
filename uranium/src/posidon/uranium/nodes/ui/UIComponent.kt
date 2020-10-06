@@ -1,6 +1,5 @@
 package posidon.uranium.nodes.ui
 
-import org.lwjgl.opengl.GL11
 import posidon.library.types.Vec2f
 import posidon.library.types.Vec2i
 import posidon.uranium.graphics.Window
@@ -18,7 +17,7 @@ abstract class UIComponent(
 ) : Node(name) {
 
     companion object {
-        var shader = Shader("/shaders/viewVertex.glsl", "/shaders/viewFragment.glsl")
+        var shader = Shader("/shaders/2DVertex.glsl", "/shaders/2DFragment.glsl")
 
         lateinit var MESH: Mesh private set
 

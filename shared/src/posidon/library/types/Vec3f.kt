@@ -25,26 +25,39 @@ data class Vec3f(var x: Float, var y: Float, var z: Float) {
     companion object {
         fun blend(v1: Vec3f, v2: Vec3f, ratio: Float): Vec3f {
             val inverseRation = 1f - ratio
-            val r = v1.x * ratio + v2.x * inverseRation
-            val g = v1.y * ratio + v2.y * inverseRation
-            val b = v1.z * ratio + v2.z * inverseRation
-            return Vec3f(r, g, b)
+            val x = v1.x * ratio + v2.x * inverseRation
+            val y = v1.y * ratio + v2.y * inverseRation
+            val z = v1.z * ratio + v2.z * inverseRation
+            return Vec3f(x, y, z)
         }
 
         inline fun zero() = Vec3f(0f, 0f, 0f)
     }
 
-    inline operator fun plus(other: Vec3f) =
-        Vec3f(x + other.x, y + other.y, z + other.z)
-    inline operator fun minus(other: Vec3f) =
-        Vec3f(x - other.x, y - other.y, z - other.z)
-    inline operator fun times(other: Vec3f) =
-        Vec3f(x * other.x, y * other.y, z * other.z)
-    inline operator fun times(other: Float) = Vec3f(x * other, y * other, z * other)
-    inline operator fun div(other: Vec3f) =
-        Vec3f(x / other.x, y / other.y, z / other.z)
-    inline operator fun div(float: Float) = Vec3f(x / float, y / float, z / float)
     inline val length get() = sqrt(x * x + y * y + (z * z).toDouble()).toFloat()
+
+    inline operator fun plus(other: Vec3f) = Vec3f(x + other.x, y + other.y, z + other.z)
+    inline operator fun minus(other: Vec3f) = Vec3f(x - other.x, y - other.y, z - other.z)
+    inline operator fun times(other: Vec3f) = Vec3f(x * other.x, y * other.y, z * other.z)
+    inline operator fun times(other: Float) = Vec3f(x * other, y * other, z * other)
+    inline operator fun div(other: Vec3f) = Vec3f(x / other.x, y / other.y, z / other.z)
+    inline operator fun div(float: Float) = Vec3f(x / float, y / float, z / float)
     inline fun normalize() = if (length == 0f) Vec3f(0f, 0f, 0f) else this / length
     inline fun dot(other: Vec3f) = x * other.x + y * other.y + z * other.z
+
+
+    inline fun selfAdd(other: Vec3f) = set(x + other.x, y + other.y, z + other.z)
+    inline fun selfSubtract(other: Vec3f) = set(x - other.x, y - other.y, z - other.z)
+    inline fun selfMultiply(other: Vec3f) = set(x * other.x, y * other.y, z * other.z)
+    inline fun selfMultiply(other: Float) = set(x * other, y * other, z * other)
+    inline fun selfDivide(other: Vec3f) = set(x / other.x, y / other.y, z / other.z)
+    inline fun selfDivide(float: Float) = set(x / float, y / float, z / float)
+    inline fun selfNormalize() = if (length == 0f) set(0f, 0f, 0f) else selfDivide(length)
+
+    fun selfBlend(other: Vec3f, ratio: Float) {
+        val inverseRation = 1f - ratio
+        x = x * ratio + other.x * inverseRation
+        y = y * ratio + other.y * inverseRation
+        z = z * ratio + other.z * inverseRation
+    }
 }

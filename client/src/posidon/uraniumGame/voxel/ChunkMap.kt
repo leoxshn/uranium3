@@ -39,6 +39,8 @@ class ChunkMap(name: String) : Node(name) {
         blockShader.bind()
         blockShader["ambientLight"] = Environment.ambientLight
         blockShader["view"] = camera.viewMatrix
+        blockShader["skyColor"] = Environment.skyColor
+        blockShader["projection"] = Window.projectionMatrix
         BlockTextures.sheet.bind()
         for (chunk in map.values) {
             if (chunk.willBeRendered /*&& camera.isPositionInFov(chunk.position * Chunk.SIZE)*/) {
@@ -49,20 +51,15 @@ class ChunkMap(name: String) : Node(name) {
     }
 
     override fun update(delta: Double) {
-        Renderer.runOnMainThread {
-            blockShader.bind()
-            blockShader["skyColor"] = Environment.skyColor
-            blockShader["projection"] = Window.projectionMatrix
-        }
-
         chunkLock.lock()
         Chunk.chunksUpdating.removeIf {
             it.generateMeshAsync()
             true
         }
+        val cameraPosition = Renderer.camera!!.position.toVec3i()
         map.keys.removeIf { chunkPos: Vec3i ->
-            if ((chunkPos * Chunk.SIZE - Renderer.camera!!.position.toVec3i()).length > 500) {
-                map[chunkPos]!!.clear()
+            if ((chunkPos * Chunk.SIZE).apply { selfSubtract(cameraPosition) }.length > 500) {
+                map[chunkPos]!!.destroy()
                 true
             } else false
         }
@@ -81,16 +78,17 @@ class ChunkMap(name: String) : Node(name) {
     }
 
     operator fun set(chunkPos: Vec3i, blocks: String) {
-        chunkLock.lock()
 
+        chunkLock.lock()
         val isNewChunk = map[chunkPos] == null
         if (isNewChunk) {
             map[chunkPos] = Chunk(chunkPos, this)
         }
 
         val chunk = map[chunkPos]!!
+        chunkLock.unlock()
 
-        for (i in 3..blocks.lastIndex step 4) {
+        for (i in 3..blocks.length step 4) {
             val material = (blocks[i - 3].toInt() shl 16) or blocks[i - 2].toInt()
             val posInChunk = Vec3i(
                 (i / 4) / (Chunk.SIZE * Chunk.SIZE),
@@ -102,8 +100,8 @@ class ChunkMap(name: String) : Node(name) {
                 else Block(ReceivedPacketHandler.blockDictionary[material]!!, posInChunk, chunkPos, chunk)
         }
 
+        chunkLock.lock()
         Chunk.chunksUpdating.add(chunk)
-
         chunkLock.unlock()
     }
 
@@ -128,7 +126,7 @@ class ChunkMap(name: String) : Node(name) {
 
     override fun destroy() {
         for (key in map.keys) {
-            map[key]!!.clear()
+            map[key]!!.destroy()
             map.remove(key)
         }
     }

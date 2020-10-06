@@ -14,14 +14,18 @@ class Chunk(
     val chunkMap: ChunkMap
 ) {
 
-    private val blocks = arrayOfNulls<Block>(CUBE_SIZE)
+    val blocks = arrayOfNulls<Block>(CUBE_SIZE)
 
     operator fun get(pos: Vec3i) = blocks[pos.x * SIZE * SIZE + pos.y * SIZE + pos.z]
     operator fun get(x: Int, y: Int, z: Int) = blocks[x * SIZE * SIZE + y * SIZE + z]
     operator fun set(pos: Vec3i, block: Block?) { blocks[pos.x * SIZE * SIZE + pos.y * SIZE + pos.z] = block }
 
-    val blockBySides = HashMap<BooleanArray, MutableList<Block>>()
-    fun clear() = blockBySides.clear()
+    fun destroy() {
+        willBeRendered = false
+        Renderer.runOnThread {
+            mesh?.delete()
+        }
+    }
 
     companion object {
         const val SIZE = 16
@@ -265,7 +269,7 @@ class Chunk(
         val tmpUv = uv.toFloatArray()
         val tmpNormals = normals.toFloatArray()
 
-        Renderer.runOnMainThread {
+        Renderer.runOnThread {
             val oldMesh = mesh
             mesh = SimpleMesh(tmpVertices, tmpIndices, tmpUv, tmpNormals)
             willBeRendered = true

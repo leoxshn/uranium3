@@ -37,14 +37,14 @@ object Renderer {
         UIComponent.shader.destroy()
     }
 
-    private val mainThreadQueue = ConcurrentLinkedQueue<() -> Unit>()
+    private val eventQueue = ConcurrentLinkedQueue<() -> Unit>()
 
-    fun runOnMainThread(fn: () -> Unit) {
-        mainThreadQueue.add(fn)
+    fun runOnThread(fn: () -> Unit) {
+        eventQueue.add(fn)
     }
 
     private fun runMainThreadEvents() {
-        val it = mainThreadQueue.iterator()
+        val it = eventQueue.iterator()
         while (it.hasNext()) {
             it.next()()
             it.remove()

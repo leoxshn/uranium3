@@ -7,13 +7,13 @@ open class Spatial(
     name: String
 ) : Node(name) {
 
-    val transform = Transform(Vec3f.zero())
+    val transform = Transform()
 
-    inline val position get() = transform.position
+    inline val position: Vec3f get() = transform.position
 
     val globalTransform: Transform
         get() = if (parent is Spatial) {
             val parentGlobalTransform = (parent as Spatial).globalTransform
-            Transform(parentGlobalTransform.position + transform.position)
+            Transform(position = parentGlobalTransform.position + transform.position)
         } else transform
 }

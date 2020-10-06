@@ -8,9 +8,7 @@ import kotlin.concurrent.thread
 
 object GameLoop {
 
-    private const val ns = 1000000000 / 60.0
-
-    const val DEFAULT_UPDATE_INTERVAL = 0.01
+    const val DEFAULT_UPDATE_INTERVAL = 0.001
 
     var updateInterval = DEFAULT_UPDATE_INTERVAL
     var running = true
@@ -33,7 +31,7 @@ object GameLoop {
             var delta = 0.0
             while (running) {
                 val now = System.nanoTime()
-                delta += (now - lastTime) / ns
+                delta += (now - lastTime) / 1000000000.0
                 lastTime = now
                 if (delta >= updateInterval) {
                     RootNode.update(delta)
@@ -44,22 +42,12 @@ object GameLoop {
 
 
         ////RENDER////////////////////////////////////
-        var lastTime = System.nanoTime()
-        var delta = 0.0
 
         while (Window.isOpen && running) {
-            val now = System.nanoTime()
-            delta += (now - lastTime) / ns
-            lastTime = now
-
             Window.update()
             Renderer.renderObjects()
             Window.swapBuffers()
-
-            if (delta > 9) {
-                Renderer.updateData()
-                delta = 0.0
-            }
+            Renderer.updateData()
         }
         end()
 

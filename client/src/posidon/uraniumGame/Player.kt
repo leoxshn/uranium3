@@ -2,6 +2,7 @@ package posidon.uraniumGame
 
 import posidon.library.types.Matrix4f
 import posidon.library.types.Vec2f
+import posidon.library.types.Vec3f
 import posidon.uraniumGame.events.PacketReceivedEvent
 import posidon.uranium.input.Input
 import posidon.uranium.input.events.Event
@@ -10,65 +11,85 @@ import posidon.uranium.nodes.spatial.Camera
 import posidon.uraniumGame.net.Client
 import posidon.uraniumGame.net.packets.MovPacket
 import posidon.uranium.input.Key
-import kotlin.math.cos
-import kotlin.math.max
-import kotlin.math.sin
+import kotlin.math.*
 
 class Player(
-    name: String
+    name: String,
+    val world: World
 ) : Camera(name) {
 
-    var moveSpeed = 0.4f
-    var jumpHeight = 0.4f
+    companion object {
+        const val FRICTION = 25f
+    }
+
+    var moveSpeed = 50f
+    var jumpForce = 50f
     var sensitivity = 0.4f
 
-    private var velocity = Vec2f(0f, 0f)
-    private val oldVelocity = Vec2f(0f, 0f)
+    private val velocity = Vec3f.zero()
+    private val oldVelocity = Vec3f.zero()
 
     override fun update(delta: Double) {
 
         val movX by lazy { sin(Math.toRadians(rotation.y.toDouble())).toFloat() }
         val movZ by lazy { cos(Math.toRadians(rotation.y.toDouble())).toFloat() }
 
-        val keys = booleanArrayOf(
-            Input.isKeyDown(Key.W),
-            Input.isKeyDown(Key.S),
-            Input.isKeyDown(Key.A),
-            Input.isKeyDown(Key.D))
+        val isW = Input.isKeyDown(Key.W)
+        val isA = Input.isKeyDown(Key.A)
+        val isS = Input.isKeyDown(Key.S)
+        val isD = Input.isKeyDown(Key.D)
 
-        oldVelocity.set(velocity / 2f)
-        velocity.set(0f, 0f)
+        velocity.set(0f, 0f, 0f)
 
-        if (!(keys[0] && keys[1])) {
-            if (keys[0]) {
+        if (!(isW && isS)) {
+            if (isW) {
                 velocity.x -= movX
-                velocity.y -= movZ
-            } else if (keys[1]) {
+                velocity.z -= movZ
+            } else if (isS) {
                 velocity.x += movX
-                velocity.y += movZ
+                velocity.z += movZ
             }
         }
-        if (!(keys[2] && keys[3])) {
-            if (keys[2]) {
+        if (!(isA && isD)) {
+            if (isA) {
                 velocity.x -= movZ
-                velocity.y += movX
-            } else if (keys[3]) {
+                velocity.z += movX
+            } else if (isD) {
                 velocity.x += movZ
-                velocity.y -= movX
+                velocity.z -= movX
             }
         }
-        velocity = velocity.normalize() * delta.toFloat() * moveSpeed
-        velocity += oldVelocity * max(1 - delta, 0.0).toFloat()
 
-        position.x += velocity.x
-        position.z += velocity.y
-
-        if (Input.isKeyDown(Key.SPACE)) {
-            position.y += (jumpHeight * delta).toFloat()
+        /*if (Input.isKeyDown(Key.SPACE)) {
+            velocity.y++
         }
         if (Input.isKeyDown(Key.LEFT_SHIFT)) {
-            position.y -= (jumpHeight * delta).toFloat()
+            velocity.y--
+        }*/
+
+        velocity.selfNormalize()
+        velocity.selfMultiply(moveSpeed)
+
+        val legPos = position.copy(y = position.y - 2)
+        if (world.getBlock(legPos) == null) {
+            velocity.y -= world.gravity
+            velocity.selfBlend(oldVelocity, min(delta.toFloat() * FRICTION, 1f))
+        } else {
+            velocity.selfBlend(oldVelocity, min(delta.toFloat() * FRICTION, 1f))
+            if (Input.isKeyDown(Key.SPACE)) {
+                velocity.y = jumpForce
+                oldVelocity.y = jumpForce
+            } else {
+                velocity.y = 0f
+                oldVelocity.y = 0f
+            }
         }
+
+        oldVelocity.set(velocity)
+        velocity.selfMultiply(delta.toFloat())
+
+        position.selfAdd(velocity)
+
         if (velocity.length != 0f) {
             Client.send(MovPacket(position))
         }
@@ -79,8 +100,8 @@ class Player(
         when (event) {
             is MouseMovedEvent -> {
                 rotation += Vec2f(
-                        -sensitivity * event.cursorMovement.y,
-                        -sensitivity * event.cursorMovement.x)
+                    -sensitivity * event.cursorMovement.y,
+                    -sensitivity * event.cursorMovement.x)
                 if (rotation.x > 90) rotation.x = 90f
                 else if (rotation.x < -90) rotation.x = -90f
                 if (rotation.y > 360) rotation.y -= 360f
@@ -106,7 +127,7 @@ class Player(
                                     position.z = coords[2].toFloat()
                                 }
                                 token.startsWith("movSpeed") -> moveSpeed = token.substring(10).toFloat()
-                                token.startsWith("jmpHeight") -> jumpHeight = token.substring(11).toFloat()
+                                token.startsWith("jmpHeight") -> jumpForce = token.substring(11).toFloat()
                             }
                         }
                     }

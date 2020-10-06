@@ -19,6 +19,7 @@ object Window {
     var width = 0; private set
     var height = 0; private set
     private lateinit var projection: Matrix4f
+    private lateinit var zoomProjection: Matrix4f
 
     var mouseLocked = false
         set(value) {
@@ -27,8 +28,7 @@ object Window {
             GLFW.glfwSetInputMode(id, GLFW.GLFW_CURSOR, if (value) GLFW.GLFW_CURSOR_DISABLED else GLFW.GLFW_CURSOR_NORMAL)
         }
 
-    val projectionMatrix: Matrix4f
-        get() = if (Input.isKeyDown(Key.C)) Matrix4f.projection(20f, width.toFloat() / height.toFloat(), NEAR, FAR) else projection
+    val projectionMatrix: Matrix4f get() = if (Input.isKeyDown(Key.C)) zoomProjection else projection
 
     var isFullscreen = false
         set(fullscreen) {
@@ -46,6 +46,7 @@ object Window {
         Window.width = width
         Window.height = height
         projection = Matrix4f.projection(70f, width.toFloat() / height.toFloat(), NEAR, FAR)
+        zoomProjection = Matrix4f.projection(20f, width.toFloat() / height.toFloat(), NEAR, FAR)
 
         if (!GLFW.glfwInit()) {
             System.err.println("[GLFW ERROR]: GLFW wasn't inititalized")
@@ -82,7 +83,8 @@ object Window {
         GLFW.glfwSetWindowSizeCallback(id) { _: Long, w: Int, h: Int ->
             width = w
             height = h
-            projection = Matrix4f.projection(70f, width.toFloat() / height.toFloat(), 0.2f, 400f)
+            projection = Matrix4f.projection(70f, width.toFloat() / height.toFloat(), NEAR, FAR)
+            zoomProjection = Matrix4f.projection(20f, width.toFloat() / height.toFloat(), NEAR, FAR)
             GL11.glViewport(0, 0, width, height)
         }
     }

@@ -22,10 +22,10 @@ fun main(args: Array<String>) = GameLoop.loop(object : EngineImplementation {
         BlockTextures.init(null)
 
         Client.start("localhost", 2512) {
-            if (!it) Renderer.runOnMainThread {
+            if (!it) Renderer.runOnThread {
                 loading.setBackgroundPath("res/textures/ui/couldnt_connect.png")
             }
-            else Renderer.runOnMainThread {
+            else Renderer.runOnThread {
                 val world = World()
                 RootNode.setScene(world)
                 loading.destroy()
