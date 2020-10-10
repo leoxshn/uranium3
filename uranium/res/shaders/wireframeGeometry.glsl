@@ -1,17 +1,17 @@
-#version 120
+#version 420 core
 
 #extension GL_EXT_gpu_shader4 : enable
 #extension GL_EXT_geometry_shader4 : enable
 
-varying in vec3 vertWorldPos[3];
-varying in vec3 vertWorldNormal[3];
+in vec3 vertWorldPos[3];
+in vec3 vertWorldNormal[3];
 
-varying out vec3 worldNormal;
-varying out vec3 worldPos;
+out vec3 worldNormal;
+out vec3 worldPos;
 
 uniform vec2 WIN_SCALE;
 
-noperspective varying vec3 dist;
+noperspective vec3 dist;
 
 void main () {
     // taken from 'Single-Pass Wireframe Rendering'

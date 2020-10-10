@@ -6,8 +6,6 @@ import posidon.uranium.graphics.Window
 import posidon.uranium.graphics.Renderer
 import posidon.uranium.graphics.Shader
 import posidon.uranium.graphics.Texture
-import posidon.uranium.graphics.mesh.Mesh
-import posidon.uranium.graphics.mesh.UiMesh
 import posidon.uranium.nodes.Environment
 import posidon.uranium.nodes.Node
 import posidon.uranium.nodes.spatial.Camera
@@ -19,16 +17,8 @@ abstract class UIComponent(
     companion object {
         var shader = Shader("/shaders/2DVertex.glsl", "/shaders/2DFragment.glsl")
 
-        lateinit var MESH: Mesh private set
-
         fun init() {
             shader.create()
-            MESH = UiMesh(floatArrayOf(
-                -1f, 1f,
-                -1f, -1f,
-                1f, -1f,
-                1f, 1f
-            ), intArrayOf(0, 1, 3, 3, 1, 2))
         }
 
         const val MATCH_PARENT = -1
@@ -142,7 +132,7 @@ abstract class UIComponent(
                 shader["ambientLight"] = calculateLight()
                 shader["position"] = renderPosition
                 shader["size"] = renderSize
-                Renderer.render(MESH)
+                Renderer.render(Renderer.QUAD_MESH)
             }
         }
     }

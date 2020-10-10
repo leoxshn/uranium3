@@ -2,9 +2,9 @@ package posidon.uraniumGame
 
 import posidon.uraniumGame.voxel.ChunkMap
 import posidon.uranium.graphics.Renderer
-import posidon.uranium.nodes.RootNode
+import posidon.uranium.nodes.NodeTree
 import posidon.uranium.nodes.spatial.Camera
-import posidon.uranium.nodes.ui.LoadingScreenComponent
+import posidon.uraniumGame.ui.LoadingScreenComponent
 import posidon.uraniumGame.net.Client
 import posidon.uranium.gameLoop.EngineImplementation
 import posidon.uranium.gameLoop.GameLoop
@@ -15,7 +15,7 @@ fun main(args: Array<String>) = GameLoop.loop(object : EngineImplementation {
         Renderer.camera = Camera("cam")
 
         val loading = LoadingScreenComponent("loadingScreen")
-        RootNode.setScene(loading)
+        NodeTree.setRoot(loading)
 
         ChunkMap.init()
 
@@ -27,7 +27,7 @@ fun main(args: Array<String>) = GameLoop.loop(object : EngineImplementation {
             }
             else Renderer.runOnThread {
                 val world = World()
-                RootNode.setScene(world)
+                NodeTree.setRoot(world)
                 loading.destroy()
                 Renderer.camera!!.destroy()
                 Renderer.camera = world.camera

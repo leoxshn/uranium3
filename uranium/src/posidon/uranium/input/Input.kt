@@ -3,44 +3,41 @@ package posidon.uranium.input
 import org.lwjgl.glfw.*
 import posidon.library.types.Vec2f
 import posidon.uranium.graphics.Window
-import posidon.uranium.input.events.MouseMovedEvent
-import posidon.uranium.nodes.RootNode
+import posidon.uranium.events.KeyPressedEvent
+import posidon.uranium.events.MouseButtonPressedEvent
+import posidon.uranium.events.MouseMovedEvent
+import posidon.uranium.events.ScrollEvent
+import posidon.uranium.nodes.NodeTree
 
-class Input(w: Window) {
+object Input {
 
     private var oldCurX = 0.0
     private var oldCurY = 0.0
 
-    companion object {
-        private val keys = BooleanArray(GLFW.GLFW_KEY_LAST)
-        private val mouseButtons = BooleanArray(GLFW.GLFW_MOUSE_BUTTON_LAST)
-        var curX = 0.0
-        var curY = 0.0
-        var scrollX = 0.0
-        var scrollY = 0.0
-        fun isKeyDown(key: Int): Boolean = keys[key]
-        fun isButtonDown(btn: Int): Boolean = mouseButtons[btn]
-    }
+    private val keys = BooleanArray(GLFW.GLFW_KEY_LAST)
+    private val mouseButtons = BooleanArray(GLFW.GLFW_MOUSE_BUTTON_LAST)
 
-    fun onKeyPressed(window: Long, key: Int, scanCode: Int, action: Int, mods: Int) {
+    internal var curX = 0.0
+    internal var curY = 0.0
+
+    fun isKeyDown(key: Int): Boolean = keys[key]
+    fun isButtonDown(btn: Int): Boolean = mouseButtons[btn]
+
+    internal fun onKeyPressed(window: Long, key: Int, scanCode: Int, action: Int, mods: Int) {
         keys[key] = action != GLFW.GLFW_RELEASE
-        when (key) {
-            Key.F11 -> Window.isFullscreen = !Window.isFullscreen
-            Key.ESCAPE -> Window.mouseLocked = false
-        }
+        NodeTree.passEvent(KeyPressedEvent(key, action))
     }
 
-    fun onMouseButtonPress(window: Long, btn: Int, action: Int, mods: Int) {
+    internal fun onMouseButtonPress(window: Long, btn: Int, action: Int, mods: Int) {
         mouseButtons[btn] = action != GLFW.GLFW_RELEASE
-        if (btn == GLFW.GLFW_MOUSE_BUTTON_LEFT) Window.mouseLocked = true
+        NodeTree.passEvent(MouseButtonPressedEvent(btn, action))
     }
 
-    fun onScroll(window: Long, x: Double, y: Double) {
-        scrollX += x
-        scrollY += y
+    internal fun onScroll(window: Long, x: Double, y: Double) {
+        NodeTree.passEvent(ScrollEvent(x, y))
     }
 
-    fun onMouseMove(window: Long, x: Double, y: Double) {
+    internal fun onMouseMove(window: Long, x: Double, y: Double) {
         if (Window.mouseLocked) {
             curX = x
             curY = y
@@ -48,7 +45,7 @@ class Input(w: Window) {
             val dx = (curX - oldCurX).toFloat()
             val dy = (curY - oldCurY).toFloat()
 
-            RootNode.passEvent(MouseMovedEvent(
+            NodeTree.passEvent(MouseMovedEvent(
                 Vec2f(x.toFloat(), y.toFloat()),
                 Vec2f(dx, dy)
             ))

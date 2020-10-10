@@ -1,6 +1,6 @@
 package posidon.uraniumGame.events
 
-import posidon.uranium.input.events.Event
+import posidon.uranium.events.Event
 
 class PacketReceivedEvent(
     val packet: String,

@@ -5,7 +5,7 @@ import posidon.library.types.Vec3i
 import posidon.uranium.nodes.Environment
 import posidon.uranium.nodes.Node
 import posidon.uraniumGame.voxel.ChunkMap
-import posidon.uranium.nodes.ui.HotBarComponent
+import posidon.uraniumGame.ui.HotBarComponent
 import posidon.uraniumGame.voxel.Block
 import posidon.uraniumGame.voxel.Chunk
 import kotlin.math.floor

@@ -4,7 +4,7 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.tan
 
-class Matrix4f {
+open class Matrix4f {
 
     val all = FloatArray(SIZE * SIZE)
 

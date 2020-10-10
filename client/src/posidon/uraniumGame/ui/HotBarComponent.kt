@@ -1,4 +1,6 @@
-package posidon.uranium.nodes.ui
+package posidon.uraniumGame.ui
+
+import posidon.uranium.nodes.ui.UIComponent
 
 class HotBarComponent(name: String) : UIComponent(name) {
 

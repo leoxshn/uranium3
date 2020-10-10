@@ -3,7 +3,7 @@ package posidon.uraniumGame.net
 import posidon.uranium.gameLoop.GameLoop
 import posidon.uraniumGame.events.PacketReceivedEvent
 import posidon.uranium.nodes.Environment
-import posidon.uranium.nodes.RootNode
+import posidon.uranium.nodes.NodeTree
 
 object ReceivedPacketHandler {
 
@@ -11,7 +11,7 @@ object ReceivedPacketHandler {
 
     operator fun invoke(packet: String) {
         val tokens = packet.split('&')
-        RootNode.passEvent(PacketReceivedEvent(packet, tokens))
+        NodeTree.passEvent(PacketReceivedEvent(packet, tokens))
         when (tokens[0]) {
             "time" -> Environment.time = tokens[1].toDouble()
             "playerInfo" -> {

@@ -32,7 +32,7 @@ object Client {
             }
             onEnd(true)
             thread(name = "uraniumClient") {
-                while (GameLoop.running) {
+                GameLoop.loop {
                     try { input.reader(Charsets.UTF_8).forEachLine { ReceivedPacketHandler(it) } }
                     catch (e: EOFException) { kill() }
                     catch (e: SocketException) { kill() }

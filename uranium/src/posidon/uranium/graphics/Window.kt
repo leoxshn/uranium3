@@ -3,24 +3,35 @@ package posidon.uranium.graphics
 import org.lwjgl.glfw.GLFW
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL11
-import posidon.library.types.Matrix4f
 import posidon.library.types.Vec3f
+import posidon.uranium.events.WindowResizedEvent
 import posidon.uranium.input.Input
-import posidon.uranium.input.Key
+import posidon.uranium.nodes.NodeTree
 
 object Window {
 
-    const val NEAR = 0.2f
-    const val FAR = 600f
-
     private var id: Long = 0
-    private var input: Input? = null
 
     var width = 0; private set
     var height = 0; private set
-    private lateinit var projection: Matrix4f
-    private lateinit var zoomProjection: Matrix4f
 
+    /**
+     * Sets window title
+     */
+    var title: String = "uranium"
+        set(value) {
+            field = value
+            GLFW.glfwSetWindowTitle(id, field)
+        }
+
+    /**
+     * This is pretty self-explanatory, isn't it?
+     */
+    val isOpen get() = !GLFW.glfwWindowShouldClose(id)
+
+    /**
+     * Whether the cursor is in it's normal state, or locked to the window and invisible
+     */
     var mouseLocked = false
         set(value) {
             if (value) GLFW.glfwSetCursorPos(id, Input.curX, Input.curY)
@@ -28,8 +39,9 @@ object Window {
             GLFW.glfwSetInputMode(id, GLFW.GLFW_CURSOR, if (value) GLFW.GLFW_CURSOR_DISABLED else GLFW.GLFW_CURSOR_NORMAL)
         }
 
-    val projectionMatrix: Matrix4f get() = if (Input.isKeyDown(Key.C)) zoomProjection else projection
-
+    /**
+     * Sets the window to be fullscreen or not
+     */
     var isFullscreen = false
         set(fullscreen) {
             if (fullscreen) {
@@ -40,13 +52,16 @@ object Window {
             field = fullscreen
         }
 
+    /**
+     * Background color of the framebuffer
+     */
+    val backgroundColor = Vec3f(0f, 0f, 0f)
+
     private val pos = IntArray(2)
 
     internal fun init(width: Int, height: Int) {
         Window.width = width
         Window.height = height
-        projection = Matrix4f.projection(70f, width.toFloat() / height.toFloat(), NEAR, FAR)
-        zoomProjection = Matrix4f.projection(20f, width.toFloat() / height.toFloat(), NEAR, FAR)
 
         if (!GLFW.glfwInit()) {
             System.err.println("[GLFW ERROR]: GLFW wasn't inititalized")
@@ -56,7 +71,6 @@ object Window {
         GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, 2)
         GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_CORE_PROFILE)
         GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_FORWARD_COMPAT, GL11.GL_TRUE)
-        input = Input(this)
         id = GLFW.glfwCreateWindow(Window.width, Window.height, title, 0, 0)
         if (id == 0L) {
             System.err.println("[GLFW ERROR]: Window wasn't created")
@@ -76,20 +90,19 @@ object Window {
     }
 
     private fun createCallbacks() {
-        GLFW.glfwSetKeyCallback(id, input!!::onKeyPressed)
-        GLFW.glfwSetCursorPosCallback(id, input!!::onMouseMove)
-        GLFW.glfwSetMouseButtonCallback(id, input!!::onMouseButtonPress)
-        GLFW.glfwSetScrollCallback(id, input!!::onScroll)
+        GLFW.glfwSetKeyCallback(id, Input::onKeyPressed)
+        GLFW.glfwSetCursorPosCallback(id, Input::onMouseMove)
+        GLFW.glfwSetMouseButtonCallback(id, Input::onMouseButtonPress)
+        GLFW.glfwSetScrollCallback(id, Input::onScroll)
         GLFW.glfwSetWindowSizeCallback(id) { _: Long, w: Int, h: Int ->
+            val event = WindowResizedEvent(width, height, w, h)
             width = w
             height = h
-            projection = Matrix4f.projection(70f, width.toFloat() / height.toFloat(), NEAR, FAR)
-            zoomProjection = Matrix4f.projection(20f, width.toFloat() / height.toFloat(), NEAR, FAR)
             GL11.glViewport(0, 0, width, height)
+            NodeTree.passEvent(event)
         }
     }
 
-    val backgroundColor = Vec3f(0f, 0f, 0f)
     internal fun update() {
         GL11.glClearColor(backgroundColor.x, backgroundColor.y, backgroundColor.z, 1.0f)
         GL11.glClear(GL11.GL_COLOR_BUFFER_BIT or GL11.GL_DEPTH_BUFFER_BIT)
@@ -97,8 +110,6 @@ object Window {
     }
 
     internal fun swapBuffers() = GLFW.glfwSwapBuffers(id)
-
-    val isOpen get() = !GLFW.glfwWindowShouldClose(id)
 
     internal fun kill() {
         GLFW.glfwSetKeyCallback(id, null)?.free()
@@ -109,10 +120,4 @@ object Window {
         GLFW.glfwDestroyWindow(id)
         GLFW.glfwTerminate()
     }
-
-    var title: String = "uranium"
-        set(value) {
-            field = value
-            GLFW.glfwSetWindowTitle(id, field)
-        }
 }

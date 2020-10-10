@@ -7,19 +7,20 @@ import posidon.uranium.graphics.Window
 import posidon.uraniumGame.BlockTextures
 import posidon.uranium.graphics.Renderer
 import posidon.uranium.graphics.Shader
-import posidon.uranium.input.events.Event
+import posidon.uranium.events.Event
 import posidon.uraniumGame.events.PacketReceivedEvent
 import posidon.uranium.nodes.Environment
 import posidon.uranium.nodes.Node
 import posidon.uranium.nodes.spatial.Camera
 import posidon.uraniumGame.net.ReceivedPacketHandler
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.locks.ReentrantLock
 
 class ChunkMap(name: String) : Node(name) {
 
     companion object {
-        var blockShader = Shader("/shaders/blockVertex.glsl", "/shaders/blockFragment.glsl")
+        var blockShader = Shader("/shaders/blockVertex.glsl", /*"/shaders/wireframeGeometry.glsl",*/ "/shaders/blockFragment.glsl")
 
         fun init() {
             blockShader.create()
@@ -28,6 +29,7 @@ class ChunkMap(name: String) : Node(name) {
 
     val chunkLock = ReentrantLock()
 
+    private val chunksUpdating = LinkedList<Chunk>()
     private val map = ConcurrentHashMap<Vec3i, Chunk>()
 
     operator fun get(x: Int, y: Int, z: Int) = map[Vec3i(x, y, z)]
@@ -40,7 +42,7 @@ class ChunkMap(name: String) : Node(name) {
         blockShader["ambientLight"] = Environment.ambientLight
         blockShader["view"] = camera.viewMatrix
         blockShader["skyColor"] = Environment.skyColor
-        blockShader["projection"] = Window.projectionMatrix
+        blockShader["projection"] = Renderer.projectionMatrix
         BlockTextures.sheet.bind()
         for (chunk in map.values) {
             if (chunk.willBeRendered /*&& camera.isPositionInFov(chunk.position * Chunk.SIZE)*/) {
@@ -52,7 +54,7 @@ class ChunkMap(name: String) : Node(name) {
 
     override fun update(delta: Double) {
         chunkLock.lock()
-        Chunk.chunksUpdating.removeIf {
+        chunksUpdating.removeIf {
             it.generateMeshAsync()
             true
         }
@@ -101,7 +103,7 @@ class ChunkMap(name: String) : Node(name) {
         }
 
         chunkLock.lock()
-        Chunk.chunksUpdating.add(chunk)
+        chunksUpdating.add(chunk)
         chunkLock.unlock()
     }
 

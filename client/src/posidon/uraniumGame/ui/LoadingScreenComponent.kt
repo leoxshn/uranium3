@@ -1,6 +1,7 @@
-package posidon.uranium.nodes.ui
+package posidon.uraniumGame.ui
 
 import posidon.library.types.Vec3f
+import posidon.uranium.nodes.ui.UIComponent
 
 class LoadingScreenComponent(name: String) : UIComponent(name) {
 

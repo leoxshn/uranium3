@@ -3,8 +3,7 @@ package posidon.uraniumGame.voxel
 import posidon.library.types.Vec3i
 import posidon.uraniumGame.BlockTextures
 import posidon.uranium.graphics.Renderer
-import posidon.uranium.graphics.mesh.SimpleMesh
-import java.util.*
+import posidon.uranium.graphics.Mesh
 import kotlin.collections.ArrayList
 import kotlin.concurrent.thread
 import kotlin.math.sqrt
@@ -30,7 +29,6 @@ class Chunk(
     companion object {
         const val SIZE = 16
         const val CUBE_SIZE = SIZE * SIZE * SIZE
-        val chunksUpdating = LinkedList<Chunk>()
 
         private const val SOUTH = 0
         private const val NORTH = 1
@@ -42,7 +40,7 @@ class Chunk(
 
     var willBeRendered = false
 
-    var mesh: SimpleMesh? = null
+    var mesh: Mesh? = null
         private set
 
     /*var isFull = false
@@ -271,7 +269,7 @@ class Chunk(
 
         Renderer.runOnThread {
             val oldMesh = mesh
-            mesh = SimpleMesh(tmpVertices, tmpIndices, tmpUv, tmpNormals)
+            mesh = Mesh(tmpIndices, listOf(Mesh.VBO(tmpVertices, 3), Mesh.VBO(tmpUv, 2), Mesh.VBO(tmpNormals, 3)))
             willBeRendered = true
             /*willBeRendered = chunkMap[position.copy(x = position.x + 1)]?.isFull != true ||
                 chunkMap[position.copy(x = position.x - 1)]?.isFull != true ||
