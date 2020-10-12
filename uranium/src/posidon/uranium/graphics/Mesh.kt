@@ -61,6 +61,7 @@ class Mesh(
     }
 
     fun delete() {
+        bind()
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0)
         for (i in vboIdList.indices) {
             val vboId = vboIdList[i]

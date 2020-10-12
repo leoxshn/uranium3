@@ -71,6 +71,11 @@ object Window {
         GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, 2)
         GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_CORE_PROFILE)
         GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_FORWARD_COMPAT, GL11.GL_TRUE)
+
+        // Antialiasing
+        GLFW.glfwWindowHint(GLFW.GLFW_STENCIL_BITS, 4)
+        GLFW.glfwWindowHint(GLFW.GLFW_SAMPLES, 4)
+
         id = GLFW.glfwCreateWindow(Window.width, Window.height, title, 0, 0)
         if (id == 0L) {
             System.err.println("[GLFW ERROR]: Window wasn't created")
@@ -95,7 +100,7 @@ object Window {
         GLFW.glfwSetMouseButtonCallback(id, Input::onMouseButtonPress)
         GLFW.glfwSetScrollCallback(id, Input::onScroll)
         GLFW.glfwSetWindowSizeCallback(id) { _: Long, w: Int, h: Int ->
-            val event = WindowResizedEvent(width, height, w, h)
+            val event = WindowResizedEvent(System.currentTimeMillis(), width, height, w, h)
             width = w
             height = h
             GL11.glViewport(0, 0, width, height)

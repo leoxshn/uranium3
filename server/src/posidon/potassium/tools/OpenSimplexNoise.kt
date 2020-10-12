@@ -4,6 +4,20 @@ import kotlin.experimental.and
 import kotlin.experimental.or
 
 class OpenSimplexNoise {
+
+    inline fun get(x: Double, y: Double, scale: Int = 1, offset: Int = 0, convertToMin0Max1: Boolean = true): Double {
+        val a = eval((x + offset) / scale, (y + offset) / scale)
+        return if (convertToMin0Max1) (a + 1) / 2 else a
+    }
+    inline fun get(x: Double, y: Double, z: Double, scale: Int = 1, offset: Int = 0, convertToMin0Max1: Boolean = true): Double {
+        val a = eval((x + offset) / scale, (y + offset) / scale, (z + offset) / scale)
+        return if (convertToMin0Max1) (a + 1) / 2 else a
+    }
+    inline fun get(x: Double, y: Double, z: Double, w: Double, scale: Int = 1, offset: Int = 0, convertToMin0Max1: Boolean = true): Double {
+        val a = eval((x + offset) / scale, (y + offset) / scale, (z + offset) / scale, (w + offset) / scale)
+        return if (convertToMin0Max1) (a + 1) / 2 else a
+    }
+
     private var perm: ShortArray
     private var permGradIndex3D: ShortArray
 

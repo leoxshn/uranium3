@@ -29,6 +29,7 @@ class Player(
     var moveSpeed = 50f
     var jumpForce = 50f
     var sensitivity = 0.4f
+    var gravity = false
 
     private val velocity = Vec3f.zero()
     private val oldVelocity = Vec3f.zero()
@@ -64,28 +65,32 @@ class Player(
             }
         }
 
-        /*if (Input.isKeyDown(Key.SPACE)) {
-            velocity.y++
+        if (!gravity) {
+            if (Input.isKeyDown(Key.SPACE)) {
+                velocity.y++
+            }
+            if (Input.isKeyDown(Key.LEFT_SHIFT)) {
+                velocity.y--
+            }
         }
-        if (Input.isKeyDown(Key.LEFT_SHIFT)) {
-            velocity.y--
-        }*/
 
         velocity.selfNormalize()
         velocity.selfMultiply(moveSpeed)
 
-        val legPos = position.copy(y = position.y - 2)
-        if (world.getBlock(legPos) == null) {
-            velocity.y -= world.gravity
-            velocity.selfBlend(oldVelocity, min(delta.toFloat() * FRICTION, 1f))
-        } else {
-            velocity.selfBlend(oldVelocity, min(delta.toFloat() * FRICTION, 1f))
-            if (Input.isKeyDown(Key.SPACE)) {
-                velocity.y = jumpForce
-                oldVelocity.y = jumpForce
+        if (gravity) {
+            val legPos = position.copy(y = position.y - 2)
+            if (world.getBlock(legPos) == null) {
+                velocity.y -= world.gravity
+                velocity.selfBlend(oldVelocity, min(delta.toFloat() * FRICTION, 1f))
             } else {
-                velocity.y = 0f
-                oldVelocity.y = 0f
+                velocity.selfBlend(oldVelocity, min(delta.toFloat() * FRICTION, 1f))
+                if (Input.isKeyDown(Key.SPACE)) {
+                    velocity.y = jumpForce
+                    oldVelocity.y = jumpForce
+                } else {
+                    velocity.y = 0f
+                    oldVelocity.y = 0f
+                }
             }
         }
 
@@ -99,6 +104,8 @@ class Player(
         }
         viewMatrix = Matrix4f.view(position, rotation)
     }
+
+    private var timeOfLastSpacePress = 0L
 
     override fun onEvent(event: Event) {
         super.onEvent(event)
@@ -142,6 +149,21 @@ class Player(
                 when (event.key) {
                     Key.F11 -> Window.isFullscreen = !Window.isFullscreen
                     Key.ESCAPE -> Window.mouseLocked = false
+                    Key.C -> when (event.action) {
+                        Input.PRESS -> fov = 20f
+                        Input.RELEASE -> fov = 70f
+                    }
+                    Key.SPACE -> {
+                        if (event.action == Input.PRESS) {
+                            val timeDifference = event.millis - timeOfLastSpacePress
+                            if (timeDifference < 200) {
+                                timeOfLastSpacePress = 0L
+                                gravity = !gravity
+                            } else {
+                                timeOfLastSpacePress = event.millis
+                            }
+                        }
+                    }
                 }
             }
             is MouseButtonPressedEvent -> {

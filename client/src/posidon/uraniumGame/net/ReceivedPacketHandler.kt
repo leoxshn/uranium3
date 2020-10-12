@@ -11,7 +11,7 @@ object ReceivedPacketHandler {
 
     operator fun invoke(packet: String) {
         val tokens = packet.split('&')
-        NodeTree.passEvent(PacketReceivedEvent(packet, tokens))
+        NodeTree.passEvent(PacketReceivedEvent(System.currentTimeMillis(), packet, tokens))
         when (tokens[0]) {
             "time" -> Environment.time = tokens[1].toDouble()
             "playerInfo" -> {

@@ -37,7 +37,7 @@ fun main(args: Array<String>) = GameLoop.loop(object : EngineImplementation {
 
     override fun kill() {
         BlockTextures.clear()
-        ChunkMap.blockShader.destroy()
+        ChunkMap.destroy()
         Client.kill()
     }
 })

@@ -11,6 +11,10 @@ import posidon.uranium.nodes.NodeTree
 
 object Input {
 
+    const val PRESS = GLFW.GLFW_PRESS
+    const val RELEASE = GLFW.GLFW_RELEASE
+    const val REPEAT = GLFW.GLFW_REPEAT
+
     private var oldCurX = 0.0
     private var oldCurY = 0.0
 
@@ -25,16 +29,16 @@ object Input {
 
     internal fun onKeyPressed(window: Long, key: Int, scanCode: Int, action: Int, mods: Int) {
         keys[key] = action != GLFW.GLFW_RELEASE
-        NodeTree.passEvent(KeyPressedEvent(key, action))
+        NodeTree.passEvent(KeyPressedEvent(System.currentTimeMillis(), key, action))
     }
 
     internal fun onMouseButtonPress(window: Long, btn: Int, action: Int, mods: Int) {
         mouseButtons[btn] = action != GLFW.GLFW_RELEASE
-        NodeTree.passEvent(MouseButtonPressedEvent(btn, action))
+        NodeTree.passEvent(MouseButtonPressedEvent(System.currentTimeMillis(), btn, action))
     }
 
     internal fun onScroll(window: Long, x: Double, y: Double) {
-        NodeTree.passEvent(ScrollEvent(x, y))
+        NodeTree.passEvent(ScrollEvent(System.currentTimeMillis(), x, y))
     }
 
     internal fun onMouseMove(window: Long, x: Double, y: Double) {
@@ -46,6 +50,7 @@ object Input {
             val dy = (curY - oldCurY).toFloat()
 
             NodeTree.passEvent(MouseMovedEvent(
+                System.currentTimeMillis(),
                 Vec2f(x.toFloat(), y.toFloat()),
                 Vec2f(dx, dy)
             ))

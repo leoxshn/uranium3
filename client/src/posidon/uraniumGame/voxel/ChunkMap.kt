@@ -3,7 +3,6 @@ package posidon.uraniumGame.voxel
 import posidon.library.types.Vec3i
 import posidon.library.util.Compressor
 import posidon.library.util.newLineUnescape
-import posidon.uranium.graphics.Window
 import posidon.uraniumGame.BlockTextures
 import posidon.uranium.graphics.Renderer
 import posidon.uranium.graphics.Shader
@@ -25,9 +24,13 @@ class ChunkMap(name: String) : Node(name) {
         fun init() {
             blockShader.create()
         }
+
+        fun destroy() {
+            blockShader.destroy()
+        }
     }
 
-    val chunkLock = ReentrantLock()
+    private val chunkLock = ReentrantLock()
 
     private val chunksUpdating = LinkedList<Chunk>()
     private val map = ConcurrentHashMap<Vec3i, Chunk>()
@@ -42,6 +45,8 @@ class ChunkMap(name: String) : Node(name) {
         blockShader["ambientLight"] = Environment.ambientLight
         blockShader["view"] = camera.viewMatrix
         blockShader["skyColor"] = Environment.skyColor
+        blockShader["skyLight"] = Environment.skyLight
+        blockShader["sunNormal"] = Environment.sunNormal
         blockShader["projection"] = Renderer.projectionMatrix
         BlockTextures.sheet.bind()
         for (chunk in map.values) {
@@ -53,19 +58,30 @@ class ChunkMap(name: String) : Node(name) {
     }
 
     override fun update(delta: Double) {
-        chunkLock.lock()
-        chunksUpdating.removeIf {
-            it.generateMeshAsync()
-            true
-        }
         val cameraPosition = Renderer.camera!!.position.toVec3i()
+        chunkLock.lock()
+        chunksUpdating.sortBy {
+            (it.position * Chunk.SIZE).apply { selfSubtract(cameraPosition) }.length
+        }
+        val it = chunksUpdating.iterator()
+        while (it.hasNext()) {
+            val chunk = it.next()
+            val distance = (chunk.position * Chunk.SIZE).apply { selfSubtract(cameraPosition) }.length
+            if (distance > 500) {
+                map.remove(chunk.position)
+            } else {
+                chunk.generateMeshAsync()
+            }
+            it.remove()
+        }
+        chunkLock.unlock()
+
         map.keys.removeIf { chunkPos: Vec3i ->
             if ((chunkPos * Chunk.SIZE).apply { selfSubtract(cameraPosition) }.length > 500) {
-                map[chunkPos]!!.destroy()
+                map.remove(chunkPos)!!.destroy()
                 true
             } else false
         }
-        chunkLock.unlock()
     }
 
     override fun onEvent(event: Event) {
@@ -81,15 +97,11 @@ class ChunkMap(name: String) : Node(name) {
 
     operator fun set(chunkPos: Vec3i, blocks: String) {
 
-        chunkLock.lock()
-        val isNewChunk = map[chunkPos] == null
-        if (isNewChunk) {
-            map[chunkPos] = Chunk(chunkPos, this)
+        val chunk = map.getOrPut(chunkPos) {
+            Chunk(chunkPos, this)
         }
 
-        val chunk = map[chunkPos]!!
-        chunkLock.unlock()
-
+        var isEmpty = true
         for (i in 3..blocks.length step 4) {
             val material = (blocks[i - 3].toInt() shl 16) or blocks[i - 2].toInt()
             val posInChunk = Vec3i(
@@ -99,37 +111,19 @@ class ChunkMap(name: String) : Node(name) {
             )
             chunk[posInChunk] =
                 if (material == -1) null
-                else Block(ReceivedPacketHandler.blockDictionary[material]!!, posInChunk, chunkPos, chunk)
+                else Block(ReceivedPacketHandler.blockDictionary[material]!!, posInChunk, chunkPos, chunk).also { isEmpty = false }
         }
 
-        chunkLock.lock()
-        chunksUpdating.add(chunk)
-        chunkLock.unlock()
+        if (!isEmpty) {
+            chunkLock.lock()
+            chunksUpdating.add(chunk)
+            chunkLock.unlock()
+        }
     }
-
-    /*operator fun set(posInChunk: Vec3i, chunkPos: Vec3i, id: String) {
-        chunkLock.lock()
-        if (chunks[chunkPos] == null) chunks[chunkPos] = Chunk(chunkPos, chunks)
-        val cube = chunks[chunkPos]!![posInChunk]
-        cube?.chunk?.blockBySides?.get(cube.sides)?.remove(cube)
-        chunks[chunkPos]!![posInChunk] =
-            if (id.isEmpty()) null
-            else Block(id, posInChunk, chunkPos, chunk).also {
-                /*runOnMainThread {
-                    it.update()
-                    if (!Chunk.chunksUpdating.contains(it.chunk)) {
-                        Chunk.chunksUpdating.add(it.chunk)
-                    }
-                }*/
-                blocksToUpdate.add(it)
-            }
-        chunkLock.unlock()
-    }*/
 
     override fun destroy() {
         for (key in map.keys) {
-            map[key]!!.destroy()
-            map.remove(key)
+            map.remove(key)!!.destroy()
         }
     }
 }

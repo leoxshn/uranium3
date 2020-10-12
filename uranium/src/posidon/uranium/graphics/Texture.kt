@@ -1,11 +1,11 @@
 package posidon.uranium.graphics
 
-import org.lwjgl.opengl.GL11
-import org.lwjgl.opengl.GL30
+import org.lwjgl.opengl.*
 import org.lwjgl.stb.STBImage
 import org.lwjgl.stb.STBImage.stbi_failure_reason
 import org.lwjgl.system.MemoryStack
 import java.nio.ByteBuffer
+import kotlin.math.min
 
 class Texture(filename: String?) {
 
@@ -35,8 +35,14 @@ class Texture(filename: String?) {
         GL30.glGenerateMipmap(GL11.GL_TEXTURE_2D)
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR_MIPMAP_NEAREST)
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST)
-        //GL11.glTexParameterf(GL11.GL_TEXTURE_2D, GL14.GL_TEXTURE_LOD_BIAS, -0.5f)
-        //GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL14.GL_GENERATE_MIPMAP, GL11.GL_TRUE)
+        GL11.glTexParameterf(GL11.GL_TEXTURE_2D, GL14.GL_TEXTURE_LOD_BIAS, -1f)
+        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL14.GL_GENERATE_MIPMAP, GL11.GL_TRUE)
+        if (GL.getCapabilities().GL_EXT_texture_filter_anisotropic) {
+            val amount = min(4f, GL11.glGetFloat(EXTTextureFilterAnisotropic.GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT))
+            GL11.glTexParameterf(GL11.GL_TEXTURE_2D, EXTTextureFilterAnisotropic.GL_TEXTURE_MAX_ANISOTROPY_EXT, amount)
+        } else {
+            println("error: Anisotropic filtering isn't supported")
+        }
         STBImage.stbi_image_free(buf!!)
         return textureId
     }

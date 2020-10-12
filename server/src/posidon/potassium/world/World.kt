@@ -28,7 +28,7 @@ abstract class World : Runnable {
             while (delta >= 1) {
                 tick()
                 for (player in players) {
-                    player.sentChunks.removeIf { (it * Chunk.SIZE - player.position.toVec3i()).length > 200 }
+                    player.sentChunks.removeIf { (it * Chunk.SIZE - player.position.toVec3i()).length > 400 }
                     val xx = (player.position.x / Chunk.SIZE).roundToInt()
                     val yy = (player.position.y / Chunk.SIZE).roundToInt()
                     val zz = (player.position.z / Chunk.SIZE).roundToInt()
