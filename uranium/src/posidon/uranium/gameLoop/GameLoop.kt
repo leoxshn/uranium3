@@ -2,7 +2,7 @@ package posidon.uranium.gameLoop
 
 import posidon.uranium.graphics.Window
 import posidon.uranium.graphics.Renderer
-import posidon.uranium.nodes.NodeTree
+import posidon.uranium.nodes.Scene
 import posidon.uranium.nodes.ui.UIComponent
 import kotlin.concurrent.thread
 
@@ -44,7 +44,7 @@ object GameLoop {
                 delta += (now - lastTime) / 1000000000.0
                 lastTime = now
                 if (delta >= updateInterval) {
-                    NodeTree.update(delta)
+                    Scene.update(delta)
                     delta = 0.0
                 }
             }
@@ -55,7 +55,7 @@ object GameLoop {
 
         ////END///////////////////////////////////////
         implementation.kill()
-        NodeTree.destroy()
+        Scene.destroy()
         Renderer.kill()
         Window.kill()
     }

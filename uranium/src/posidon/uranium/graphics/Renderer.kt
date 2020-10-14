@@ -2,7 +2,7 @@ package posidon.uranium.graphics
 
 import org.lwjgl.opengl.*
 import posidon.uranium.gameLoop.GameLoop
-import posidon.uranium.nodes.NodeTree
+import posidon.uranium.nodes.Scene
 import posidon.uranium.nodes.spatial.Camera
 import posidon.uranium.nodes.ui.UIComponent
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -74,7 +74,7 @@ object Renderer {
     internal fun loop() {
         while (Window.isOpen && GameLoop.running) {
             Window.update()
-            camera?.let { NodeTree.render(this, it) }
+            camera?.let { Scene.render(this, it) }
             Window.swapBuffers()
 
             val it = eventQueue.iterator()

@@ -2,11 +2,11 @@ package posidon.uranium.nodes.ui
 
 import posidon.library.types.Vec2f
 import posidon.library.types.Vec2i
+import posidon.library.types.Vec3f
 import posidon.uranium.graphics.Window
 import posidon.uranium.graphics.Renderer
 import posidon.uranium.graphics.Shader
 import posidon.uranium.graphics.Texture
-import posidon.uranium.nodes.Environment
 import posidon.uranium.nodes.Node
 import posidon.uranium.nodes.spatial.Camera
 
@@ -127,6 +127,8 @@ abstract class UIComponent(
         if (visible) {
             val bg = background
             if (bg != null) {
+                //GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA)
+                //GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_SRC_ALPHA)
                 shader.bind()
                 bg.bind()
                 shader["ambientLight"] = calculateLight()
@@ -137,7 +139,8 @@ abstract class UIComponent(
         }
     }
 
-    protected open fun calculateLight() = Environment.ambientLight
+    protected val light = Vec3f(1f, 1f, 1f)
+    protected open fun calculateLight() = light
 
     override fun destroy() {
         background?.delete()

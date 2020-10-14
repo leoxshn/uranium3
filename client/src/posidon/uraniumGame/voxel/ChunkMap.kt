@@ -8,8 +8,8 @@ import posidon.uranium.graphics.Renderer
 import posidon.uranium.graphics.Shader
 import posidon.uranium.events.Event
 import posidon.uraniumGame.events.PacketReceivedEvent
-import posidon.uranium.nodes.Environment
 import posidon.uranium.nodes.Node
+import posidon.uranium.nodes.Scene
 import posidon.uranium.nodes.spatial.Camera
 import posidon.uraniumGame.net.ReceivedPacketHandler
 import java.util.*
@@ -42,11 +42,11 @@ class ChunkMap(name: String) : Node(name) {
 
     override fun render(renderer: Renderer, camera: Camera) {
         blockShader.bind()
-        blockShader["ambientLight"] = Environment.ambientLight
+        blockShader["ambientLight"] = Scene.environment.ambientLight
         blockShader["view"] = camera.viewMatrix
-        blockShader["skyColor"] = Environment.skyColor
-        blockShader["skyLight"] = Environment.skyLight
-        blockShader["sunNormal"] = Environment.sunNormal
+        blockShader["skyColor"] = Scene.environment.skyColor
+        blockShader["skyLight"] = Scene.environment.skyLight
+        blockShader["sunNormal"] = Scene.environment.sunNormal
         blockShader["projection"] = Renderer.projectionMatrix
         BlockTextures.sheet.bind()
         for (chunk in map.values) {

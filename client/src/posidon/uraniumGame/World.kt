@@ -2,27 +2,29 @@ package posidon.uraniumGame
 
 import posidon.library.types.Vec3f
 import posidon.library.types.Vec3i
-import posidon.uranium.nodes.Environment
-import posidon.uranium.nodes.Node
+import posidon.uranium.nodes.Scene
+import posidon.uraniumGame.ui.CrossHair
 import posidon.uraniumGame.voxel.ChunkMap
-import posidon.uraniumGame.ui.HotBarComponent
 import posidon.uraniumGame.voxel.Block
 import posidon.uraniumGame.voxel.Chunk
 import kotlin.math.floor
 
-class World : Node("World") {
+object World : Scene("World") {
+
+    override val environment = WorldEnvironment()
 
     var gravity = 20f
 
     val camera = Player("camera", this)
     val chunkMap = ChunkMap("chunks")
-    val hotBar = HotBarComponent("hotBar")
+    val crossHair = CrossHair("crosshair")
+    //val hotBar = HotBarComponent("hotBar")
 
     init {
         add(camera)
         add(chunkMap)
-        add(hotBar)
-        add(Environment)
+        //add(hotBar)
+        add(crossHair)
     }
 
     fun getBlock(position: Vec3f) = getBlock(floor(position.x).toInt(), floor(position.y).toInt(), floor(position.z).toInt())

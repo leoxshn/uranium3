@@ -7,7 +7,7 @@ import posidon.uranium.events.KeyPressedEvent
 import posidon.uranium.events.MouseButtonPressedEvent
 import posidon.uranium.events.MouseMovedEvent
 import posidon.uranium.events.ScrollEvent
-import posidon.uranium.nodes.NodeTree
+import posidon.uranium.nodes.Scene
 
 object Input {
 
@@ -29,16 +29,16 @@ object Input {
 
     internal fun onKeyPressed(window: Long, key: Int, scanCode: Int, action: Int, mods: Int) {
         keys[key] = action != GLFW.GLFW_RELEASE
-        NodeTree.passEvent(KeyPressedEvent(System.currentTimeMillis(), key, action))
+        Scene.passEvent(KeyPressedEvent(System.currentTimeMillis(), key, action))
     }
 
     internal fun onMouseButtonPress(window: Long, btn: Int, action: Int, mods: Int) {
         mouseButtons[btn] = action != GLFW.GLFW_RELEASE
-        NodeTree.passEvent(MouseButtonPressedEvent(System.currentTimeMillis(), btn, action))
+        Scene.passEvent(MouseButtonPressedEvent(System.currentTimeMillis(), btn, action))
     }
 
     internal fun onScroll(window: Long, x: Double, y: Double) {
-        NodeTree.passEvent(ScrollEvent(System.currentTimeMillis(), x, y))
+        Scene.passEvent(ScrollEvent(System.currentTimeMillis(), x, y))
     }
 
     internal fun onMouseMove(window: Long, x: Double, y: Double) {
@@ -49,7 +49,7 @@ object Input {
             val dx = (curX - oldCurX).toFloat()
             val dy = (curY - oldCurY).toFloat()
 
-            NodeTree.passEvent(MouseMovedEvent(
+            Scene.passEvent(MouseMovedEvent(
                 System.currentTimeMillis(),
                 Vec2f(x.toFloat(), y.toFloat()),
                 Vec2f(dx, dy)

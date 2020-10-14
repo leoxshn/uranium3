@@ -1,4 +1,4 @@
-package posidon.uraniumGame.ui
+package posidon.uraniumGame.ui.loading
 
 import posidon.library.types.Vec3f
 import posidon.uranium.nodes.ui.UIComponent
@@ -11,7 +11,4 @@ class LoadingScreenComponent(name: String) : UIComponent(name) {
         transform.keepAspectRatio = true
         setBackgroundPath("res/textures/ui/loading.png")
     }
-
-    val light = Vec3f(1f, 1f, 1f)
-    override fun calculateLight() = light
 }

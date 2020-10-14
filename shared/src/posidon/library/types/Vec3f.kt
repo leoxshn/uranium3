@@ -32,6 +32,7 @@ data class Vec3f(var x: Float, var y: Float, var z: Float) {
         }
 
         inline fun zero() = Vec3f(0f, 0f, 0f)
+        val ZERO = zero()
     }
 
     inline val length get() = sqrt(x * x + y * y + (z * z).toDouble()).toFloat()

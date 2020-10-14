@@ -60,8 +60,8 @@ open class Node(
     private val children = ArrayList<Node>()
 
     internal fun allChildren(fn: Node.() -> Unit) {
+        fn()
         for (child in children) {
-            child.fn()
             child.allChildren(fn)
         }
     }

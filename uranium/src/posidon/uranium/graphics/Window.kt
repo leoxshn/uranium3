@@ -6,7 +6,7 @@ import org.lwjgl.opengl.GL11
 import posidon.library.types.Vec3f
 import posidon.uranium.events.WindowResizedEvent
 import posidon.uranium.input.Input
-import posidon.uranium.nodes.NodeTree
+import posidon.uranium.nodes.Scene
 
 object Window {
 
@@ -104,7 +104,7 @@ object Window {
             width = w
             height = h
             GL11.glViewport(0, 0, width, height)
-            NodeTree.passEvent(event)
+            Scene.passEvent(event)
         }
     }
 
