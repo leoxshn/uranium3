@@ -1,6 +1,4 @@
-package posidon.uraniumGame.events
-
-import posidon.uranium.events.Event
+package posidon.uranium.events
 
 class PacketReceivedEvent(
     override val millis: Long,

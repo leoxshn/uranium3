@@ -7,11 +7,10 @@ import posidon.uraniumGame.BlockTextures
 import posidon.uranium.graphics.Renderer
 import posidon.uranium.graphics.Shader
 import posidon.uranium.events.Event
-import posidon.uraniumGame.events.PacketReceivedEvent
+import posidon.uranium.events.PacketReceivedEvent
 import posidon.uranium.nodes.Node
 import posidon.uranium.nodes.Scene
 import posidon.uranium.nodes.spatial.Camera
-import posidon.uraniumGame.net.ReceivedPacketHandler
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.locks.ReentrantLock
@@ -19,6 +18,9 @@ import java.util.concurrent.locks.ReentrantLock
 class ChunkMap(name: String) : Node(name) {
 
     companion object {
+
+        val blockDictionary = HashMap<Int, String>()
+
         var blockShader = Shader("/shaders/blockVertex.glsl", /*"/shaders/wireframeGeometry.glsl",*/ "/shaders/blockFragment.glsl")
 
         fun init() {
@@ -111,7 +113,7 @@ class ChunkMap(name: String) : Node(name) {
             )
             chunk[posInChunk] =
                 if (material == -1) null
-                else Block(ReceivedPacketHandler.blockDictionary[material]!!, posInChunk, chunkPos, chunk).also { isEmpty = false }
+                else Block(blockDictionary[material]!!, posInChunk, chunkPos, chunk).also { isEmpty = false }
         }
 
         if (!isEmpty) {

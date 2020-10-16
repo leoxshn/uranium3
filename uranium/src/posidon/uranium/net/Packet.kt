@@ -1,4 +1,4 @@
-package posidon.uraniumGame.net.packets
+package posidon.uranium.net
 
 abstract class Packet(val name: String) {
     protected abstract fun packToString(): String

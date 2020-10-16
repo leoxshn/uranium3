@@ -13,7 +13,10 @@ abstract class World : Runnable {
 
     abstract val name: String
     protected abstract val generator: WorldGenerator
+    protected abstract fun tick()
+
     protected val chunks = ChunkMap()
+
     val players = ConcurrentLinkedQueue<Player>()
 
     final override fun run() {
@@ -28,19 +31,22 @@ abstract class World : Runnable {
             while (delta >= 1) {
                 tick()
                 for (player in players) {
-                    player.sentChunks.removeIf { (it * Chunk.SIZE - player.position.toVec3i()).length > 400 }
+                    player.sentChunks.removeIf { (it * Chunk.SIZE).apply {
+                        selfSubtract(player.position)
+                    }.length > 400 }
                     val xx = (player.position.x / Chunk.SIZE).roundToInt()
                     val yy = (player.position.y / Chunk.SIZE).roundToInt()
                     val zz = (player.position.z / Chunk.SIZE).roundToInt()
-                    for (x in -8..8) for (y in -8..8) for (z in -8..8) {
+                    for (x in -10..10) for (y in -10..10) for (z in -10..10) {
                         val chunkX = xx + x
                         val chunkY = yy + y
                         val chunkZ = zz + z
-                        if (!player.sentChunks.contains(Vec3i(chunkX, chunkY, chunkZ)) && chunkY > -18 && chunkY < 18) {
-                            player.send(ChunkPacket(chunks[chunkX, chunkY, chunkZ]
+                        val chunkPos = Vec3i(chunkX, chunkY, chunkZ)
+                        if (!player.sentChunks.contains(chunkPos) && chunkY > -18 && chunkY < 18) {
+                            player.send(ChunkPacket(chunks[chunkPos]
                                 ?: generator.genChunk(chunkX, chunkY, chunkZ)
-                                    .also { chunks[chunkX, chunkY, chunkZ] = it }))
-                            player.sentChunks.add(Vec3i(chunkX, chunkY, chunkZ))
+                                    .also { chunks[chunkPos] = it }))
+                            player.sentChunks.add(chunkPos)
                         }
                     }
                 }
@@ -50,10 +56,8 @@ abstract class World : Runnable {
         }
     }
 
-    abstract fun tick()
-
-    class ChunkMap : HashMap<Triple<Int, Int, Int>, Chunk>() {
-        operator fun get(x: Int, y: Int, z: Int) = get(Triple(x, y, z))
-        operator fun set(x: Int, y: Int, z: Int, chunk: Chunk) = set(Triple(x, y, z), chunk)
+    class ChunkMap : HashMap<Vec3i, Chunk>() {
+        operator fun get(x: Int, y: Int, z: Int) = get(Vec3i(x, y, z))
+        operator fun set(x: Int, y: Int, z: Int, chunk: Chunk) = set(Vec3i(x, y, z), chunk)
     }
 }

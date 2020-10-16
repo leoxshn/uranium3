@@ -4,7 +4,7 @@ import posidon.uranium.graphics.Renderer
 import posidon.uranium.events.Event
 import posidon.uranium.nodes.spatial.Camera
 
-open class Node(
+abstract class Node(
     val name: String
 ) {
 

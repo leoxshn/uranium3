@@ -5,12 +5,12 @@ import posidon.library.types.Vec2f
 import posidon.library.types.Vec3f
 import posidon.uranium.graphics.Window
 import posidon.uranium.input.Button
-import posidon.uraniumGame.events.PacketReceivedEvent
+import posidon.uranium.events.PacketReceivedEvent
 import posidon.uranium.input.Input
 import posidon.uranium.events.Event
 import posidon.uranium.events.MouseMovedEvent
 import posidon.uranium.nodes.spatial.Camera
-import posidon.uraniumGame.net.Client
+import posidon.uranium.net.Client
 import posidon.uraniumGame.net.packets.MovPacket
 import posidon.uranium.input.Key
 import posidon.uranium.events.KeyPressedEvent

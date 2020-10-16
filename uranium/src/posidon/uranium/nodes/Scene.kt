@@ -16,6 +16,14 @@ abstract class Scene(name: String) : Node(name) {
         Window.backgroundColor.set(environment.skyColor)
     }
 
+    override fun onEvent(event: Event) {
+        environment.onEvent(event)
+    }
+
+    override fun destroy() {
+        environment.destroy()
+    }
+
     companion object {
 
         private var currentScene: Scene = object : Scene("") {}

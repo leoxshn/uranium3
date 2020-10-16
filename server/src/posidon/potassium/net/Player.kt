@@ -2,7 +2,7 @@ package posidon.potassium.net
 
 import posidon.library.types.Vec3f
 import posidon.potassium.Console
-import posidon.potassium.Worlds
+import posidon.potassium.world.Worlds
 import posidon.potassium.net.packets.BlockDictionaryPacket
 import posidon.potassium.net.packets.Packet
 import posidon.potassium.print
@@ -63,7 +63,7 @@ class Player(private val socket: Socket) : Thread(socket.inetAddress.hostAddress
             playerName = packet[1]
             id = packet[2].hashCode()
             Players.add(this)
-            world = Worlds.earthWorld
+            world = Worlds["terra"]
             Console.beforeCmdLine {
                 Console.printInfo(playerName!!, " joined the server")
             }

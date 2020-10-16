@@ -43,6 +43,7 @@ data class Vec3i(var x: Int, var y: Int, var z: Int) {
 
     inline fun selfAdd(other: Vec3i) = set(x + other.x, y + other.y, z + other.z)
     inline fun selfSubtract(other: Vec3i) = set(x - other.x, y - other.y, z - other.z)
+    inline fun selfSubtract(other: Vec3f) = set((x - other.x).toInt(), (y - other.y).toInt(), (z - other.z).toInt())
     inline fun selfMultiply(other: Vec3i) = set(x * other.x, y * other.y, z * other.z)
     inline fun selfMultiply(float: Float) = set((x * float).toInt(), (y * float).toInt(), (z * float).toInt())
     inline fun selfMultiply(int: Int) = set(x * int, y * int, z * int)

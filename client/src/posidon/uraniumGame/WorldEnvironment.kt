@@ -1,6 +1,9 @@
 package posidon.uraniumGame
 
 import posidon.library.types.Vec3f
+import posidon.uranium.events.Event
+import posidon.uranium.events.PacketReceivedEvent
+import posidon.uranium.gameLoop.GameLoop
 import posidon.uranium.nodes.environment.Environment
 import posidon.uranium.nodes.environment.setSunRotationDeg
 import kotlin.math.abs
@@ -37,5 +40,19 @@ class WorldEnvironment : Environment {
         ambientLight.set(Vec3f.blend(AMBIENT_LIGHT_NIGHT, AMBIENT_LIGHT_DAY, a.pow(2.0).toFloat()))
 
         setSunRotationDeg(a * 180.0)
+    }
+
+    override fun onEvent(event: Event) {
+        if (event is PacketReceivedEvent) {
+            when (event.tokens[0]) {
+                "time" -> World.environment.time = event.tokens[1].toDouble()
+                "playerInfo" -> {
+                    for (token in event.tokens) if (token.startsWith("time")) {
+                        World.environment.time = token.substring(6).toDouble()
+                    }
+                }
+                "" -> GameLoop.end()
+            }
+        }
     }
 }
