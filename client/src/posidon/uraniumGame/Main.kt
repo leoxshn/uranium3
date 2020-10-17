@@ -7,8 +7,10 @@ import posidon.uranium.nodes.spatial.Camera
 import posidon.uranium.net.Client
 import posidon.uranium.gameLoop.EngineImplementation
 import posidon.uranium.gameLoop.GameLoop
+import posidon.uranium.voxel.VoxelChunkMap
 import posidon.uraniumGame.net.packets.JoinPacket
 import posidon.uraniumGame.ui.loading.LoadingScreenScene
+import posidon.uraniumGame.voxel.Block
 
 fun main(args: Array<String>) = GameLoop.loop(object : EngineImplementation {
 
@@ -18,9 +20,7 @@ fun main(args: Array<String>) = GameLoop.loop(object : EngineImplementation {
         val loading = LoadingScreenScene()
         Scene.set(loading)
 
-        ChunkMap.init()
-
-        BlockTextures.init(null)
+        Block.Textures.init()
 
         Client.start("localhost", 2512) {
             if (it) {
@@ -47,8 +47,7 @@ fun main(args: Array<String>) = GameLoop.loop(object : EngineImplementation {
     }
 
     override fun kill() {
-        BlockTextures.clear()
-        ChunkMap.destroy()
+        Block.Textures.destroy()
         Client.stop()
     }
 })

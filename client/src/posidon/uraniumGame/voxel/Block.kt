@@ -1,26 +1,38 @@
 package posidon.uraniumGame.voxel
 
+import posidon.library.types.Vec2f
 import posidon.library.types.Vec3i
-import java.util.*
+import posidon.uranium.graphics.Texture
+import posidon.uranium.voxel.Voxel
 
 class Block(
-    val id: String,
-    var posInChunk: Vec3i,
-    var chunkPos: Vec3i,
-    val chunk: Chunk
-) {
+    id: String,
+    posInChunk: Vec3i,
+    chunk: Chunk
+) : Voxel(id, posInChunk, chunk) {
 
-    inline val absolutePosition inline get() = chunkPos * Chunk.SIZE + posInChunk
+    override fun getUV() = Textures.getUvForId(id)
 
-    override fun hashCode() = Objects.hash(chunkPos, posInChunk, id)
+    object Textures {
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-        other as Block
-        if (id != other.id) return false
-        if (chunkPos != other.chunkPos) return false
-        if (posInChunk != other.posInChunk) return false
-        return true
+        fun getUvForId(id: String) = when (id) {
+            "grass" -> Vec2f(0f, 0f)
+            "stone" -> Vec2f(1f, 0f)
+            "moonstone" -> Vec2f(2f, 0f)
+            "wood" -> Vec2f(0f, 1f)
+            "moonstone_bricks" -> Vec2f(2f, 1f)
+            "slime" -> Vec2f(3f, 0f)
+            else -> Vec2f(7f, 7f)
+        }
+
+        lateinit var sheet: Texture private set
+
+        fun init() {
+            sheet = Texture("res/textures/block/texture.png")
+        }
+
+        fun destroy() {
+            sheet.delete()
+        }
     }
 }

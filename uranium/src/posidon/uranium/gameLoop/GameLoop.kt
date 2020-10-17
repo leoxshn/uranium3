@@ -4,6 +4,7 @@ import posidon.uranium.graphics.Window
 import posidon.uranium.graphics.Renderer
 import posidon.uranium.nodes.Scene
 import posidon.uranium.nodes.ui.UIComponent
+import posidon.uranium.voxel.VoxelChunkMap
 import kotlin.concurrent.thread
 
 object GameLoop {
@@ -32,6 +33,7 @@ object GameLoop {
         Renderer.init()
 
         UIComponent.init()
+        VoxelChunkMap.init()
 
         implementation.init()
 
@@ -56,6 +58,7 @@ object GameLoop {
         ////END///////////////////////////////////////
         implementation.kill()
         Scene.destroy()
+        VoxelChunkMap.destroy()
         Renderer.kill()
         Window.kill()
     }

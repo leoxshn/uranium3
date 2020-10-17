@@ -12,11 +12,11 @@ import kotlin.math.pow
 class WorldEnvironment : Environment {
 
     companion object {
-        private val SKY_NORMAL = Vec3f(0.4f, 0.65f, 0.956f)
+        private val SKY_NORMAL = Vec3f(0.4f, 0.65f, 0.96f)
         private val SKY_NIGHT = Vec3f(0f, 0.04f, 0.113f)
-        private val SKY_LIGHT_DAY = Vec3f(1f, 1f, 1f)
+        private val SKY_LIGHT_DAY = Vec3f(1.2f, 1.16f, 1.13f)
         private val SKY_LIGHT_NIGHT = Vec3f(0f, 0f, 0f)
-        private val AMBIENT_LIGHT_DAY = Vec3f(.9f, .9f, .9f)
+        private val AMBIENT_LIGHT_DAY = Vec3f(.88f, .885f, .89f)
         private val AMBIENT_LIGHT_NIGHT = Vec3f(0.09f, 0.137f, 0.180f)
         private const val MAX_TIME = 600.0
     }
