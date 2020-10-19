@@ -88,7 +88,6 @@ object Window {
         GLFW.glfwSetWindowSizeLimits(id, 600, 300, -1, -1)
         GLFW.glfwMakeContextCurrent(id)
         GL.createCapabilities()
-        GL11.glEnable(GL11.GL_DEPTH_TEST)
         createCallbacks()
         GLFW.glfwShowWindow(id)
         GLFW.glfwSwapInterval(1)
@@ -116,7 +115,7 @@ object Window {
 
     internal fun swapBuffers() = GLFW.glfwSwapBuffers(id)
 
-    internal fun kill() {
+    internal fun destroy() {
         GLFW.glfwSetKeyCallback(id, null)?.free()
         GLFW.glfwSetCursorPosCallback(id, null)?.free()
         GLFW.glfwSetMouseButtonCallback(id, null)?.free()

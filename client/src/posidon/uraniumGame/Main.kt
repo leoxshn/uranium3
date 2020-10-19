@@ -35,6 +35,7 @@ fun main(args: Array<String>) = GameLoop.loop(object : EngineImplementation {
                 }
 
                 Renderer.runOnThread {
+                    World.initOnRenderThread()
                     Scene.set(World)
                     loading.destroy()
                     Renderer.camera!!.destroy()

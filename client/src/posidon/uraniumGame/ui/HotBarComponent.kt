@@ -12,5 +12,5 @@ class HotBarComponent(name: String) : UIComponent(name) {
         setBackgroundPath("res/textures/ui/hotbar.png")
     }
 
-    override fun calculateLight() = Scene.environment?.ambientLight ?: light
+    override fun calculateLight() = Scene.environment.ambientLight
 }

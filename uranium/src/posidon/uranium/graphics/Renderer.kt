@@ -5,6 +5,7 @@ import posidon.uranium.gameLoop.GameLoop
 import posidon.uranium.nodes.Scene
 import posidon.uranium.nodes.spatial.Camera
 import posidon.uranium.nodes.ui.UIComponent
+import posidon.uranium.voxel.VoxelChunkMap
 import java.util.concurrent.ConcurrentLinkedQueue
 
 object Renderer {
@@ -62,11 +63,15 @@ object Renderer {
             1f, -1f,
             1f, 1f
         ), 2)))
+
+        UIComponent.init()
+        VoxelChunkMap.init()
     }
 
-    internal fun kill() {
+    internal fun destroy() {
         GL20.glUseProgram(0)
-        UIComponent.shader.destroy()
+        VoxelChunkMap.destroy()
+        UIComponent.destroy()
     }
 
     private val eventQueue = ConcurrentLinkedQueue<() -> Unit>()

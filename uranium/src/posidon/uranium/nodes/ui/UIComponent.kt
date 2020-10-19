@@ -1,5 +1,6 @@
 package posidon.uranium.nodes.ui
 
+import org.lwjgl.opengl.GL11
 import posidon.library.types.Vec2f
 import posidon.library.types.Vec2i
 import posidon.library.types.Vec3f
@@ -16,9 +17,16 @@ abstract class UIComponent(
 
     companion object {
         var shader = Shader("/shaders/2DVertex.glsl", "/shaders/2DFragment.glsl")
+        var textShader = Shader("/shaders/textVertex.glsl", "/shaders/textFragment.glsl")
 
         fun init() {
             shader.create()
+            textShader.create()
+        }
+
+        fun destroy() {
+            shader.destroy()
+            textShader.destroy()
         }
 
         const val MATCH_PARENT = -1
@@ -102,8 +110,8 @@ abstract class UIComponent(
         }
     }
 
-    private val renderSize = Vec2f(1f, 1f)
-    private val renderPosition = Vec2f(0f, 0f)
+    internal val renderSize = Vec2f(1f, 1f)
+    internal val renderPosition = Vec2f(0f, 0f)
 
     private fun updateRenderData() {
         renderPosition.set(
@@ -125,6 +133,7 @@ abstract class UIComponent(
 
     override fun render(renderer: Renderer, camera: Camera) {
         if (visible) {
+            GL11.glDisable(GL11.GL_DEPTH_TEST)
             val bg = background
             if (bg != null) {
                 //GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA)

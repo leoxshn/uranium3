@@ -39,7 +39,7 @@ class ChunkMap(name: String) : VoxelChunkMap<Chunk>(name) {
             if (distance > 500) {
                 map.remove(chunk.position)
                 it.remove()
-            } else if (chunk.allNeighboringChunksAreLoaded) {
+            } else if (distance < 460 && chunk.allNeighboringChunksAreLoaded) {
                 chunk.generateMeshAsync()
                 it.remove()
             }

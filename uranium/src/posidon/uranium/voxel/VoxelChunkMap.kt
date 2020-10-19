@@ -1,5 +1,6 @@
 package posidon.uranium.voxel
 
+import org.lwjgl.opengl.GL11
 import posidon.library.types.Vec3i
 import posidon.uranium.graphics.Renderer
 import posidon.uranium.graphics.Shader
@@ -32,6 +33,8 @@ abstract class VoxelChunkMap<C : VoxelChunk<*>>(name: String) : Node(name) {
     operator fun set(v: Vec3i, chunk: C) { map[v] = chunk }
 
     override fun render(renderer: Renderer, camera: Camera) {
+        GL11.glEnable(GL11.GL_DEPTH_TEST)
+
         blockShader.bind()
         blockShader["ambientLight"] = Scene.environment.ambientLight
         blockShader["view"] = camera.viewMatrix

@@ -50,6 +50,23 @@ class Shader(vertexPath: String, fragmentPath: String) {
     inline operator fun set(name: String, value: Boolean) = GL20.glUniform1i(getUniformLocation(name), if (value) 1 else 0)
     inline operator fun set(name: String, value: Vec2f) = GL20.glUniform2f(getUniformLocation(name), value.x, value.y)
     inline operator fun set(name: String, value: Vec3f) = GL20.glUniform3f(getUniformLocation(name), value.x, value.y, value.z)
+
+    inline operator fun set(name: String, value: FloatArray) {
+        for (i in value.indices) set("$name[$i]", value[i])
+    }
+    inline operator fun set(name: String, value: IntArray) {
+        for (i in value.indices) set("$name[$i]", value[i])
+    }
+    inline operator fun set(name: String, value: BooleanArray) {
+        for (i in value.indices) set("$name[$i]", value[i])
+    }
+    inline operator fun set(name: String, value: Array<Vec2f>) {
+        for (i in value.indices) set("$name[$i]", value[i])
+    }
+    inline operator fun set(name: String, value: Array<Vec3f>) {
+        for (i in value.indices) set("$name[$i]", value[i])
+    }
+
     inline operator fun set(name: String, value: Matrix4f) {
         val matrix = MemoryUtil.memAllocFloat(Matrix4f.SIZE * Matrix4f.SIZE)
         matrix.put(value.all).flip()

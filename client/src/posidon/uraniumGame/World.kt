@@ -3,7 +3,9 @@ package posidon.uraniumGame
 import posidon.library.types.Vec3f
 import posidon.library.types.Vec3i
 import posidon.uranium.nodes.Scene
+import posidon.uranium.nodes.ui.text.Text
 import posidon.uraniumGame.ui.CrossHair
+import posidon.uraniumGame.ui.Font
 import posidon.uraniumGame.voxel.ChunkMap
 import posidon.uraniumGame.voxel.Block
 import posidon.uraniumGame.voxel.Chunk
@@ -35,5 +37,12 @@ object World : Scene("World") {
         val smallZ = if (z % Chunk.SIZE < 0) Chunk.SIZE + z % Chunk.SIZE else z % Chunk.SIZE
         val chunkPos = Vec3i(floor(x.toFloat() / Chunk.SIZE).toInt(), floor(y.toFloat() / Chunk.SIZE).toInt(), floor(z.toFloat() / Chunk.SIZE).toInt())
         return chunkMap[chunkPos]?.get(smallX, smallY, smallZ)
+    }
+
+    fun initOnRenderThread() {
+        add(Text("text", Font()).apply {
+            //setBackgroundPath("res/textures/ui/hotbar.png")
+            string = "this is a test, pls work"
+        })
     }
 }
