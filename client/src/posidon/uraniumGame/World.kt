@@ -3,7 +3,8 @@ package posidon.uraniumGame
 import posidon.library.types.Vec3f
 import posidon.library.types.Vec3i
 import posidon.uranium.nodes.Scene
-import posidon.uranium.nodes.ui.text.Text
+import posidon.uranium.nodes.ui.UIComponent
+import posidon.uranium.nodes.ui.text.TextLine
 import posidon.uraniumGame.ui.CrossHair
 import posidon.uraniumGame.ui.Font
 import posidon.uraniumGame.voxel.ChunkMap
@@ -40,8 +41,8 @@ object World : Scene("World") {
     }
 
     fun initOnRenderThread() {
-        add(Text("text", Font()).apply {
-            //setBackgroundPath("res/textures/ui/hotbar.png")
+        add(TextLine("text", Font()).apply {
+            size.set(UIComponent.MATCH_PARENT, 21)
             string = "this is a test, pls work"
         })
     }

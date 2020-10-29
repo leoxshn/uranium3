@@ -78,8 +78,45 @@ class Font : MonospaceFont("res/textures/ui/font.png") {
         '9' -> Vec2f(8f, 2f)
         '0' -> Vec2f(9f, 2f)
 
-        ' ' -> Vec2f(34f, 0f)
+        '.' -> Vec2f(10f, 2f)
+        ',' -> Vec2f(11f, 2f)
+        ':' -> Vec2f(12f, 2f)
+        ';' -> Vec2f(13f, 2f)
+        '!' -> Vec2f(14f, 2f)
+        '?' -> Vec2f(15f, 2f)
+        '¡' -> Vec2f(16f, 2f)
+        '¿' -> Vec2f(17f, 2f)
+        '*' -> Vec2f(18f, 2f)
+        '+' -> Vec2f(19f, 2f)
+        '-' -> Vec2f(20f, 2f)
+        '_' -> Vec2f(21f, 2f)
+        '(' -> Vec2f(22f, 2f)
+        ')' -> Vec2f(22f, 2f)
+        '{' -> Vec2f(23f, 2f)
+        '}' -> Vec2f(23f, 2f)
+        '[' -> Vec2f(24f, 2f)
+        ']' -> Vec2f(24f, 2f)
+        '<' -> Vec2f(25f, 2f)
+        '>' -> Vec2f(25f, 2f)
+
+        '|' -> Vec2f(0f, 3f)
+        '@' -> Vec2f(1f, 3f)
+        '#' -> Vec2f(2f, 3f)
+        '$' -> Vec2f(3f, 3f)
+        '%' -> Vec2f(4f, 3f)
+        '&' -> Vec2f(5f, 3f)
+        '/' -> Vec2f(6f, 3f)
+        '=' -> Vec2f(7f, 3f)
+        '\'' -> Vec2f(8f, 3f)
+        '"' -> Vec2f(9f, 3f)
+
+        ' ' -> Vec2f(-1f, -1f)
 
         else -> Vec2f(34f, 1f)
+    }
+
+    override fun isFlipped(char: Char) = when (char) {
+        ')', '}', ']', '>' -> true
+        else -> false
     }
 }

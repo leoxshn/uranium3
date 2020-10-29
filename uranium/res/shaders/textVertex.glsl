@@ -4,6 +4,8 @@ in vec2 pos;
 
 uniform vec2 position;
 uniform vec2 size;
+uniform vec2 glyphSize;
+uniform int textLength;
 
 out vec2 uv;
 
@@ -14,5 +16,5 @@ void main () {
     model[0].x = size.x;
     model[1].y = size.y;
     gl_Position = model * vec4(pos, 0, 1);
-    uv = vec2(0.5 + pos.x / 2.0, 0.5 - pos.y / 2.0);
+    uv = vec2((0.5 + pos.x / 2.0) * textLength, 0.5 - pos.y / 2.0) * glyphSize;
 }

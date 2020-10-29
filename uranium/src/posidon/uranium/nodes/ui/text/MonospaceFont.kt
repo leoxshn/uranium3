@@ -8,6 +8,7 @@ abstract class MonospaceFont(path: String) {
     abstract val glyphWidth: Int
     abstract val glyphHeight: Int
     abstract fun getPosition(char: Char): Vec2f
+    abstract fun isFlipped(char: Char): Boolean
 
     internal val texture = Texture(path)
 
@@ -16,7 +17,8 @@ abstract class MonospaceFont(path: String) {
     }
 
     internal fun getUVs(string: String) = Array(string.length) {
-        val (x, y) = getPosition(string[it])
+        val char = string[it]
+        val (x, y) = getPosition(char)
         Vec2f(x * glyphWidth / texture.width, y * glyphHeight / texture.height)
     }
 

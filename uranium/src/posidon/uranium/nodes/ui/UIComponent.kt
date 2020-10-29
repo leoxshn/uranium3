@@ -30,6 +30,7 @@ abstract class UIComponent(
         }
 
         const val MATCH_PARENT = -1
+        const val WRAP_CONTENT = -1
     }
 
     val transform = Transform2D(

@@ -7,9 +7,8 @@ import posidon.uranium.nodes.spatial.Camera
 import posidon.uranium.net.Client
 import posidon.uranium.gameLoop.EngineImplementation
 import posidon.uranium.gameLoop.GameLoop
-import posidon.uranium.voxel.VoxelChunkMap
 import posidon.uraniumGame.net.packets.JoinPacket
-import posidon.uraniumGame.ui.loading.LoadingScreenScene
+import posidon.uraniumGame.ui.LoadingScreenScene
 import posidon.uraniumGame.voxel.Block
 
 fun main(args: Array<String>) = GameLoop.loop(object : EngineImplementation {
@@ -42,7 +41,7 @@ fun main(args: Array<String>) = GameLoop.loop(object : EngineImplementation {
                     Renderer.camera = World.camera
                 }
             } else Renderer.runOnThread {
-                loading.component.setBackgroundPath("res/textures/ui/couldnt_connect.png")
+                loading.text.string = "Couldn't connect :("
             }
         }
     }

@@ -3,10 +3,11 @@ package posidon.uranium.nodes.ui.text
 import posidon.library.types.Vec2f
 import posidon.library.types.Vec3f
 import posidon.uranium.graphics.Renderer
+import posidon.uranium.graphics.Window
 import posidon.uranium.nodes.spatial.Camera
 import posidon.uranium.nodes.ui.UIComponent
 
-class Text(
+class TextLine(
     name: String,
     font: MonospaceFont
 ) : UIComponent(name) {
@@ -17,7 +18,7 @@ class Text(
             renderGlyphSize.set(value.glyphWidth.toFloat() / value.texture.width, value.glyphHeight.toFloat() / value.texture.height)
         }
 
-    val textColor = Vec3f(1f, 1f, 1f)
+    val color = Vec3f(1f, 1f, 1f)
     var string: String? = null
         set(value) {
             field = value
@@ -26,6 +27,19 @@ class Text(
 
     private var uvs = arrayOf<Vec2f>()
     private val renderGlyphSize = Vec2f(font.glyphWidth.toFloat() / font.texture.width, font.glyphHeight.toFloat() / font.texture.height)
+    private val textRenderSize: Vec2f = Vec2f.zero()
+
+    override fun update(delta: Double) {
+        super.update(delta)
+
+        if (string == null) {
+            textRenderSize.set(0f, 0f)
+        } else {
+            textRenderSize.set(
+                globalTransform.size.y.toFloat() / Window.width *
+                    (string?.length ?: 0) * font.glyphWidth / font.glyphHeight, renderSize.y)
+        }
+    }
 
     override fun render(renderer: Renderer, camera: Camera) {
         super.render(renderer, camera)
@@ -34,10 +48,10 @@ class Text(
             textShader.bind()
             font.bind()
             textShader["position"] = renderPosition
-            textShader["size"] = renderSize * Vec2f(globalTransform.size.y.toFloat() / globalTransform.size.x, 1f)
+            textShader["size"] = textRenderSize
 
             textShader["glyphSize"] = renderGlyphSize
-            textShader["color"] = textColor
+            textShader["color"] = color
             textShader["text"] = uvs
             textShader["textLength"] = uvs.size
             Renderer.render(Renderer.QUAD_MESH)
