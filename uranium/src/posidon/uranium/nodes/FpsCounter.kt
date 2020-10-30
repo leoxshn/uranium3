@@ -2,6 +2,7 @@ package posidon.uranium.nodes
 
 import posidon.uranium.graphics.Renderer
 import posidon.uranium.nodes.spatial.Eye
+import kotlin.math.round
 
 class FpsCounter(name: String) : Node(name) {
 
@@ -22,7 +23,7 @@ class FpsCounter(name: String) : Node(name) {
         if (localDelta > 1.0) {
             val frames = renderCycles
             renderCycles = 0
-            fps = (frames / localDelta).toInt()
+            fps = round(frames / localDelta).toInt()
             localDelta = 0.0
         }
     }

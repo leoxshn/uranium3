@@ -15,33 +15,17 @@ abstract class View(
     name: String
 ) : Node(name) {
 
-    companion object {
-        var shader = Shader("/shaders/2DVertex.glsl", "/shaders/2DFragment.glsl")
-        var textShader = Shader("/shaders/textVertex.glsl", "/shaders/textFragment.glsl")
-
-        fun init() {
-            shader.create()
-            textShader.create()
-        }
-
-        fun destroy() {
-            shader.destroy()
-            textShader.destroy()
-        }
-
-        const val MATCH_PARENT = -1
-        const val WRAP_CONTENT = -1
-    }
-
     val transform = Transform2D(
         Vec2i.zero(),
-        Vec2i(MATCH_PARENT, MATCH_PARENT),
+        Vec2i(WRAP_CONTENT, WRAP_CONTENT),
         Vec2f(1f, 1f),
         false)
 
-    inline val position get() = transform.position
+    inline val translation get() = transform.translation
     inline val size get() = transform.size
     inline val scale get() = transform.scale
+
+    var gravity = Gravity.TOP or Gravity.LEFT
 
     val globalTransform = Transform2D(
         Vec2i.zero(),
@@ -55,59 +39,60 @@ abstract class View(
     }
 
     private fun updateGlobalTransform() {
+        val parentSize: Vec2i
+        val parentScale: Vec2f
+
         if (parent is View) {
             val parentGlobalTransform = (parent as View).globalTransform
-            globalTransform.position.set(parentGlobalTransform.position +
-                (position.toVec2f() * parentGlobalTransform.scale).toVec2i())
-            val parentSize = parentGlobalTransform.size
-            if (transform.size.x == MATCH_PARENT && transform.size.y == MATCH_PARENT) {
-                globalTransform.size.set(parentSize)
-            } else {
-                globalTransform.size.x = if (transform.size.x == MATCH_PARENT) {
-                    parentSize.x
-                } else transform.size.x
-                globalTransform.size.y = if (transform.size.y == MATCH_PARENT) {
-                    parentSize.y
-                } else transform.size.y
-            }
-            globalTransform.scale.set(parentGlobalTransform.scale * scale)
-
-            if (transform.keepAspectRatio) {
-                val bg = background
-                if (bg != null) {
-                    if (parentSize.x / bg.width > parentSize.y / bg.height) {
-                        globalTransform.size.x = globalTransform.size.x / bg.width * bg.height
-                        globalTransform.size.y = globalTransform.size.y
-                    } else {
-                        globalTransform.size.x = globalTransform.size.x
-                        globalTransform.size.y = globalTransform.size.y / bg.height * bg.width
-                    }
-                }
-            }
+            parentSize = parentGlobalTransform.size
+            parentScale = parentGlobalTransform.scale
+            globalTransform.translation.set(parentGlobalTransform.translation +
+                (translation.toVec2f() * parentGlobalTransform.scale).toVec2i())
         } else {
-            globalTransform.position.set(transform.position)
-            globalTransform.size.x = if (transform.size.x == MATCH_PARENT) {
-                Window.width
-            } else transform.size.x
-            globalTransform.size.y = if (transform.size.y == MATCH_PARENT) {
-                Window.height
-            } else transform.size.y
-            globalTransform.scale.set(transform.scale)
+            parentSize = Vec2i(Window.width, Window.height)
+            parentScale = Vec2f(1f, 1f)
+            globalTransform.translation.set(transform.translation)
+        }
 
-            if (transform.keepAspectRatio) {
-                val bg = background
-                if (bg != null) {
-                    val w = Window.width.toFloat() / bg.width
-                    val h = Window.height.toFloat() / bg.height
-                    if (w > h) {
-                        globalTransform.size.x = (globalTransform.size.x / w * h).toInt()
-                        globalTransform.size.y = globalTransform.size.y
-                    } else {
-                        globalTransform.size.x = globalTransform.size.x
-                        globalTransform.size.y = (globalTransform.size.y / h * w).toInt()
-                    }
+        globalTransform.size.x = when (size.x) {
+            MATCH_PARENT -> parentSize.x
+            WRAP_CONTENT -> getContentWidth()
+            else -> size.x
+        }
+        globalTransform.size.y = when (size.y) {
+            MATCH_PARENT -> parentSize.y
+            WRAP_CONTENT -> getContentHeight()
+            else -> size.y
+        }
+        globalTransform.scale.set(parentScale.x * scale.x, parentScale.y * scale.y)
+
+        if (transform.keepAspectRatio) {
+            val bg = background
+            if (bg != null) {
+                if (parentSize.x / bg.width > parentSize.y / bg.height) {
+                    globalTransform.size.x = globalTransform.size.x * bg.height / bg.width
+                    globalTransform.size.y = globalTransform.size.y
+                } else {
+                    globalTransform.size.x = globalTransform.size.x
+                    globalTransform.size.y = globalTransform.size.y * bg.width / bg.height
                 }
             }
+        }
+
+        when {
+            gravity and Gravity.CENTER_HORIZONTAL == Gravity.CENTER_HORIZONTAL -> {}
+            gravity and Gravity.RIGHT == Gravity.RIGHT -> globalTransform.translation.x =
+                globalTransform.translation.x + parentSize.x / 2 - globalTransform.size.x / 2
+            gravity and Gravity.LEFT == Gravity.LEFT -> globalTransform.translation.x =
+                globalTransform.translation.x - parentSize.x / 2 + globalTransform.size.x / 2
+        }
+
+        when {
+            gravity and Gravity.CENTER_VERTICAL == Gravity.CENTER_VERTICAL -> {}
+            gravity and Gravity.TOP == Gravity.TOP -> globalTransform.translation.y =
+                globalTransform.translation.y + parentSize.y / 2 - globalTransform.size.y / 2
+            gravity and Gravity.BOTTOM == Gravity.BOTTOM -> globalTransform.translation.y =
+                globalTransform.translation.y - parentSize.y / 2 + globalTransform.size.y / 2
         }
     }
 
@@ -116,8 +101,8 @@ abstract class View(
 
     private fun updateRenderData() {
         renderPosition.set(
-            globalTransform.position.x.toFloat() * 2 / Window.width,
-            globalTransform.position.y.toFloat() * 2 / Window.height)
+            globalTransform.translation.x.toFloat() * 2 / Window.width,
+            globalTransform.translation.y.toFloat() * 2 / Window.height)
         renderSize.set(
             globalTransform.size.x.toFloat() / Window.width,
             globalTransform.size.y.toFloat() / Window.height)
@@ -126,10 +111,31 @@ abstract class View(
     var visible = true
 
     private var background: Texture? = null
-
     fun setBackgroundPath(path: String?) {
         background?.delete()
         background = Texture(path)
+    }
+
+    protected val light = Vec3f(1f, 1f, 1f)
+    protected open fun calculateLight() = light
+
+    protected open fun getContentWidth(): Int {
+        var maxWidth = 0
+        for (child in children) {
+            if (child is View && child.globalTransform.size.x > maxWidth) {
+                maxWidth = child.globalTransform.size.x
+            }
+        }
+        return maxWidth
+    }
+    protected open fun getContentHeight(): Int {
+        var maxHeight = 0
+        for (child in children) {
+            if (child is View && child.globalTransform.size.y > maxHeight) {
+                maxHeight = child.globalTransform.size.y
+            }
+        }
+        return maxHeight
     }
 
     override fun render(renderer: Renderer, eye: Eye) {
@@ -149,10 +155,25 @@ abstract class View(
         }
     }
 
-    protected val light = Vec3f(1f, 1f, 1f)
-    protected open fun calculateLight() = light
-
     override fun destroy() {
         background?.delete()
+    }
+
+    companion object {
+        var shader = Shader("/shaders/2DVertex.glsl", "/shaders/2DFragment.glsl")
+        var textShader = Shader("/shaders/textVertex.glsl", "/shaders/textFragment.glsl")
+
+        fun init() {
+            shader.create()
+            textShader.create()
+        }
+
+        fun destroy() {
+            shader.destroy()
+            textShader.destroy()
+        }
+
+        const val MATCH_PARENT = -1
+        const val WRAP_CONTENT = -2
     }
 }

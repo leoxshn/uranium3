@@ -41,7 +41,7 @@ object World : Scene("World") {
 
     fun initOnRenderThread() {
         add(FpsIndicator("fps", Font()).apply {
-            size.set(View.MATCH_PARENT, 21)
+            size.set(View.WRAP_CONTENT, 21)
         })
     }
 }

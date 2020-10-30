@@ -57,7 +57,7 @@ abstract class Node(
     open fun render(renderer: Renderer, eye: Eye) {}
     open fun destroy() {}
 
-    private val children = ArrayList<Node>()
+    protected val children = ArrayList<Node>()
 
     internal fun allChildren(fn: Node.() -> Unit) {
         fn()

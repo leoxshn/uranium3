@@ -35,11 +35,11 @@ class TextLine(
         if (string == null) {
             textRenderSize.set(0f, 0f)
         } else {
-            textRenderSize.set(
-                globalTransform.size.y.toFloat() / Window.width *
-                    (string?.length ?: 0) * font.glyphWidth / font.glyphHeight, renderSize.y)
+            textRenderSize.set(getContentWidth().toFloat() / Window.width, renderSize.y)
         }
     }
+
+    override fun getContentWidth() = (string?.length ?: 0) * font.glyphWidth * globalTransform.size.y / font.glyphHeight
 
     override fun render(renderer: Renderer, eye: Eye) {
         super.render(renderer, eye)
