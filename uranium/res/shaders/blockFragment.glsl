@@ -4,8 +4,10 @@ in vec2 atlasUV;
 in vec2 uv;
 in vec3 normal;
 in float visibility;
+in vec3 toEyeVector;
 
-uniform sampler2D tex;
+layout (binding = 0) uniform sampler2D albedo;
+layout (binding = 1) uniform sampler2D specular;
 uniform vec3 skyColor;
 uniform vec3 sunNormal;
 uniform vec3 skyLight;
@@ -14,12 +16,17 @@ uniform float emission;
 
 out vec4 outColor;
 
-const int SHEET_SIZE = 8;
+const float SHEET_SIZE = 8.0;
 
 void main () {
     vec2 realUV = (uv - floor(uv) + atlasUV) / SHEET_SIZE;
     vec3 directionalLight = skyLight * (dot(sunNormal, normal) / 2 + 0.5);
-    vec3 light = max(ambientLight * (emission + 1), directionalLight);
-    outColor = mix(vec4(skyColor, 1.0), vec4(light, 1.0) * texture(tex, realUV), visibility);
-    //outColor = mix(vec4(normal, 1.0), outColor, 0.9);
+
+    float specularValue = (dot(reflect(-sunNormal, normal), normalize(toEyeVector)) / 2 + 0.5);
+    vec4 specularTexture = texture(specular, realUV);
+    vec3 specularLight = skyLight * specularTexture.r * 2 * pow(specularValue, specularTexture.b * 4);
+
+    vec3 light = max(ambientLight * (emission + 1), directionalLight) + specularLight;
+
+    outColor = mix(vec4(skyColor, 1.0), vec4(light, 1.0) * texture(albedo, realUV), visibility);
 }

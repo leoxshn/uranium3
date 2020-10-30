@@ -48,4 +48,14 @@ class Texture(filename: String?) {
     }
 
     override fun toString() = "texture { id: $id, w: $width, h: $height }"
+
+    companion object {
+        fun bind(vararg textures: Texture) {
+            for (i in textures.indices) {
+                GL13.glActiveTexture(GL13.GL_TEXTURE0 + i)
+                textures[i].bind()
+            }
+            GL13.glActiveTexture(GL13.GL_TEXTURE0)
+        }
+    }
 }

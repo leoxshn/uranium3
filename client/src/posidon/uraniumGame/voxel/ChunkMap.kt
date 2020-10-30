@@ -26,7 +26,7 @@ class ChunkMap(name: String) : VoxelChunkMap<Chunk>(name) {
     private val chunksUpdating = LinkedList<Chunk>()
 
     override fun preRender(shader: Shader) {
-        Block.Textures.sheet.bind()
+        Block.Textures.bindTileSet()
     }
 
     override fun update(delta: Double) {

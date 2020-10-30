@@ -12,12 +12,14 @@ out vec2 atlasUV;
 out vec2 uv;
 out vec3 normal;
 out float visibility;
+out vec3 toEyeVector;
 
 const float DENSITY = 0.01;
 const float GRADIENT = 1;
 
 void main () {
-    vec4 positionRelativeToEye = view * vec4(position + inVertex, 1.0);
+    vec4 worldPos = vec4(position + inVertex, 1.0);
+    vec4 positionRelativeToEye = view * worldPos;
     gl_Position = projection * positionRelativeToEye;
     normal = inNormal;
     atlasUV = inUV;
@@ -31,6 +33,8 @@ void main () {
     } else {
         uv = vec2(0.0, 0.0);
     }
+
+    toEyeVector = (inverse(view) * vec4(0.0, 0.0, 0.0, 1.0)).xyz - worldPos.xyz;
 
     visibility = 1;//min(exp(-pow((length(positionRelativeToEye.xyz) * DENSITY), GRADIENT)), 1.0);
 }

@@ -25,14 +25,21 @@ class Block(
             else -> Vec2f(7f, 7f)
         }
 
-        lateinit var sheet: Texture private set
+        fun bindTileSet() {
+            Texture.bind(albedo, specular)
+        }
+
+        private lateinit var albedo: Texture
+        private lateinit var specular: Texture
 
         fun init() {
-            sheet = Texture("res/textures/block/texture.png")
+            albedo = Texture("res/textures/block/albedo.png")
+            specular = Texture("res/textures/block/specular.png")
         }
 
         fun destroy() {
-            sheet.delete()
+            albedo.delete()
+            specular.delete()
         }
     }
 }
