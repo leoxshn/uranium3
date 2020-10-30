@@ -3,7 +3,8 @@ package posidon.uraniumGame
 import posidon.library.types.Vec3f
 import posidon.library.types.Vec3i
 import posidon.uranium.nodes.Scene
-import posidon.uranium.nodes.ui.UIComponent
+import posidon.uranium.nodes.ui.FpsIndicator
+import posidon.uranium.nodes.ui.View
 import posidon.uranium.nodes.ui.text.TextLine
 import posidon.uraniumGame.ui.CrossHair
 import posidon.uraniumGame.ui.Font
@@ -18,15 +19,13 @@ object World : Scene("World") {
 
     var gravity = 20f
 
-    val camera = Player("camera", this)
+    val eye = Player("eye", this)
     val chunkMap = ChunkMap("chunks")
     val crossHair = CrossHair("crosshair")
-    //val hotBar = HotBarComponent("hotBar")
 
     init {
-        add(camera)
+        add(eye)
         add(chunkMap)
-        //add(hotBar)
         add(crossHair)
     }
 
@@ -41,9 +40,8 @@ object World : Scene("World") {
     }
 
     fun initOnRenderThread() {
-        add(TextLine("text", Font()).apply {
-            size.set(UIComponent.MATCH_PARENT, 21)
-            string = "this is a test, pls work"
+        add(FpsIndicator("fps", Font()).apply {
+            size.set(View.MATCH_PARENT, 21)
         })
     }
 }

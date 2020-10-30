@@ -3,8 +3,8 @@ package posidon.uranium.graphics
 import org.lwjgl.opengl.*
 import posidon.uranium.gameLoop.GameLoop
 import posidon.uranium.nodes.Scene
-import posidon.uranium.nodes.spatial.Camera
-import posidon.uranium.nodes.ui.UIComponent
+import posidon.uranium.nodes.spatial.Eye
+import posidon.uranium.nodes.ui.View
 import posidon.uranium.voxel.VoxelChunkMap
 import java.util.concurrent.ConcurrentLinkedQueue
 
@@ -14,24 +14,24 @@ object Renderer {
     const val FAR = 600f
 
     /**
-     * The camera from whose point of view the renderer is gonna render 3d objects.
-     * [projectionMatrix]'s fov gets set to the camera's
+     * The eye from whose point of view the renderer is gonna render 3d objects.
+     * [projectionMatrix]'s fov gets set to the eye's
      */
-    var camera: Camera? = null
+    var eye: Eye? = null
         set(value) {
             field = value
-            camera?.fov?.let { projectionMatrix.setFovAndAspectRatio(it, Window.width.toFloat() / Window.height.toFloat()) }
+            eye?.fov?.let { projectionMatrix.setFovAndAspectRatio(it, Window.width.toFloat() / Window.height.toFloat()) }
         }
 
     /**
      * Projection matrix used for all 3d rendering.
-     * It's fov depends on the [camera]
+     * It's fov depends on the [eye]
      */
     val projectionMatrix = ProjectionMatrix(0f, 0f, NEAR, FAR)
 
     /**
      * Mesh of a quad.
-     * Used for [UIComponent]s
+     * Used for [View]s
      */
     lateinit var QUAD_MESH: Mesh private set
 
@@ -64,14 +64,14 @@ object Renderer {
             1f, 1f
         ), 2)))
 
-        UIComponent.init()
+        View.init()
         VoxelChunkMap.init()
     }
 
     internal fun destroy() {
         GL20.glUseProgram(0)
         VoxelChunkMap.destroy()
-        UIComponent.destroy()
+        View.destroy()
     }
 
     private val eventQueue = ConcurrentLinkedQueue<() -> Unit>()
@@ -79,7 +79,7 @@ object Renderer {
     internal fun loop() {
         while (Window.isOpen && GameLoop.running) {
             Window.update()
-            camera?.let { Scene.render(this, it) }
+            eye?.let { Scene.render(this, it) }
             Window.swapBuffers()
 
             val it = eventQueue.iterator()

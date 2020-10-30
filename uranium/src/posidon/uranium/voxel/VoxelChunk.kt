@@ -51,7 +51,7 @@ abstract class VoxelChunk<V : Voxel>(
     /*var isFull = false
         private set*/
 
-    fun generateMeshAsync() = thread (isDaemon = true) {
+    fun generateMeshAsync(priority: Int) = thread (isDaemon = true, priority = priority) {
 
         class VoxelFace(val voxel: Voxel) {
             var transparent = false
@@ -88,15 +88,6 @@ abstract class VoxelChunk<V : Voxel>(
         val uv = ArrayList<Float>()
         val normals = ArrayList<Float>()
 
-        var i: Int
-        var j: Int
-        var k: Int
-        var l: Int
-        var w: Int
-        var h: Int
-        var u: Int
-        var v: Int
-        var n: Int
         var side = 0
         val x = intArrayOf(0, 0, 0)
         val q = intArrayOf(0, 0, 0)
@@ -121,8 +112,8 @@ abstract class VoxelChunk<V : Voxel>(
         var b = false
         while (b != backFace) {
             for (d in 0..2) {
-                u = (d + 1) % 3
-                v = (d + 2) % 3
+                val u = (d + 1) % 3
+                val v = (d + 2) % 3
                 x[0] = 0
                 x[1] = 0
                 x[2] = 0
@@ -137,7 +128,7 @@ abstract class VoxelChunk<V : Voxel>(
                 }
                 x[d] = -1
                 while (x[d] < size) {
-                    n = 0
+                    var n = 0
                     x[v] = 0
                     while (x[v] < size) {
                         x[u] = 0
@@ -152,18 +143,19 @@ abstract class VoxelChunk<V : Voxel>(
                     x[d]++
 
                     n = 0
-                    j = 0
+                    var j = 0
                     while (j < size) {
-                        i = 0
+                        var i = 0
                         while (i < size) {
                             if (mask[n] != null) {
-                                w = 1
+                                var w = 1
                                 while (i + w < size && mask[n + w] != null && mask[n + w]!!.equals(mask[n])) {
                                     w++
                                 }
 
                                 var done = false
-                                h = 1
+                                var h = 1
+                                var k: Int
                                 while (j + h < size) {
                                     k = 0
                                     while (k < w) {
@@ -254,7 +246,7 @@ abstract class VoxelChunk<V : Voxel>(
                                 /*
                                  * We zero out the mask
                                  */
-                                l = 0
+                                var l = 0
                                 while (l < h) {
                                     k = 0
                                     while (k < w) {

@@ -2,7 +2,7 @@ package posidon.uranium.nodes
 
 import posidon.uranium.graphics.Renderer
 import posidon.uranium.events.Event
-import posidon.uranium.nodes.spatial.Camera
+import posidon.uranium.nodes.spatial.Eye
 
 abstract class Node(
     val name: String
@@ -54,7 +54,7 @@ abstract class Node(
 
     protected open fun onEvent(event: Event) {}
     open fun update(delta: Double) {}
-    open fun render(renderer: Renderer, camera: Camera) {}
+    open fun render(renderer: Renderer, eye: Eye) {}
     open fun destroy() {}
 
     private val children = ArrayList<Node>()

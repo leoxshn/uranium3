@@ -4,13 +4,13 @@ import posidon.library.types.Vec2f
 import posidon.library.types.Vec3f
 import posidon.uranium.graphics.Renderer
 import posidon.uranium.graphics.Window
-import posidon.uranium.nodes.spatial.Camera
-import posidon.uranium.nodes.ui.UIComponent
+import posidon.uranium.nodes.spatial.Eye
+import posidon.uranium.nodes.ui.View
 
 class TextLine(
     name: String,
     font: MonospaceFont
-) : UIComponent(name) {
+) : View(name) {
 
     var font = font
         set(value) {
@@ -41,8 +41,8 @@ class TextLine(
         }
     }
 
-    override fun render(renderer: Renderer, camera: Camera) {
-        super.render(renderer, camera)
+    override fun render(renderer: Renderer, eye: Eye) {
+        super.render(renderer, eye)
 
         if (visible) {
             textShader.bind()

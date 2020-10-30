@@ -10,6 +10,9 @@ import posidon.uranium.events.PacketReceivedEvent
 import posidon.uranium.voxel.VoxelChunkMap
 import java.util.*
 import java.util.concurrent.locks.ReentrantLock
+import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.min
 
 class ChunkMap(name: String) : VoxelChunkMap<Chunk>(name) {
 
@@ -27,27 +30,27 @@ class ChunkMap(name: String) : VoxelChunkMap<Chunk>(name) {
     }
 
     override fun update(delta: Double) {
-        val cameraPosition = Renderer.camera!!.position.toVec3i()
+        val eyePosition = Renderer.eye!!.position.toVec3i()
         chunkLock.lock()
         chunksUpdating.sortBy {
-            (it.position * Chunk.SIZE).apply { selfSubtract(cameraPosition) }.length
+            (it.position * Chunk.SIZE).apply { selfSubtract(eyePosition) }.length
         }
         val it = chunksUpdating.iterator()
         while (it.hasNext()) {
             val chunk = it.next()
-            val distance = chunk.absolutePosition.apply { selfSubtract(cameraPosition) }.length
+            val distance = chunk.absolutePosition.apply { selfSubtract(eyePosition) }.length
             if (distance > 500) {
                 map.remove(chunk.position)
                 it.remove()
             } else if (distance < 460 && chunk.allNeighboringChunksAreLoaded) {
-                chunk.generateMeshAsync()
+                chunk.generateMeshAsync(min(max(abs(10 - (distance / 600f)).toInt(), 4), 8))
                 it.remove()
             }
         }
         chunkLock.unlock()
 
         map.keys.removeIf { chunkPos: Vec3i ->
-            if ((chunkPos * Chunk.SIZE).apply { selfSubtract(cameraPosition) }.length > 500) {
+            if ((chunkPos * Chunk.SIZE).apply { selfSubtract(eyePosition) }.length > 500) {
                 map.remove(chunkPos)!!.destroy()
                 true
             } else false

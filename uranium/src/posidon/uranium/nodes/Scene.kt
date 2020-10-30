@@ -5,7 +5,7 @@ import posidon.uranium.graphics.Renderer
 import posidon.uranium.graphics.Window
 import posidon.uranium.nodes.environment.Environment
 import posidon.uranium.nodes.environment.NullEnvironment
-import posidon.uranium.nodes.spatial.Camera
+import posidon.uranium.nodes.spatial.Eye
 
 abstract class Scene(name: String) : Node(name) {
 
@@ -53,8 +53,8 @@ abstract class Scene(name: String) : Node(name) {
             this.update(delta)
         }
 
-        internal fun render(renderer: Renderer, camera: Camera) = currentScene.allChildren {
-            this.render(renderer, camera)
+        internal fun render(renderer: Renderer, eye: Eye) = currentScene.allChildren {
+            this.render(renderer, eye)
         }
 
         internal fun destroy() = currentScene.allChildren {

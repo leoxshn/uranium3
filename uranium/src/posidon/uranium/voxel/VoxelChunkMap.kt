@@ -6,7 +6,7 @@ import posidon.uranium.graphics.Renderer
 import posidon.uranium.graphics.Shader
 import posidon.uranium.nodes.Node
 import posidon.uranium.nodes.Scene
-import posidon.uranium.nodes.spatial.Camera
+import posidon.uranium.nodes.spatial.Eye
 import java.util.concurrent.ConcurrentHashMap
 
 abstract class VoxelChunkMap<C : VoxelChunk<*>>(name: String) : Node(name) {
@@ -32,12 +32,12 @@ abstract class VoxelChunkMap<C : VoxelChunk<*>>(name: String) : Node(name) {
     operator fun get(v: Vec3i): C? = map[v]
     operator fun set(v: Vec3i, chunk: C) { map[v] = chunk }
 
-    override fun render(renderer: Renderer, camera: Camera) {
+    override fun render(renderer: Renderer, eye: Eye) {
         GL11.glEnable(GL11.GL_DEPTH_TEST)
 
         blockShader.bind()
         blockShader["ambientLight"] = Scene.environment.ambientLight
-        blockShader["view"] = camera.viewMatrix
+        blockShader["view"] = eye.viewMatrix
         blockShader["skyColor"] = Scene.environment.skyColor
         blockShader["skyLight"] = Scene.environment.skyLight
         blockShader["sunNormal"] = Scene.environment.sunNormal
@@ -46,7 +46,7 @@ abstract class VoxelChunkMap<C : VoxelChunk<*>>(name: String) : Node(name) {
         preRender(blockShader)
 
         for (chunk in map.values) {
-            if (chunk.willBeRendered /*&& camera.isPositionInFov(chunk.position * Chunk.SIZE)*/) {
+            if (chunk.willBeRendered /*&& eye.isPositionInFov(chunk.position * Chunk.SIZE)*/) {
                 blockShader["position"] = (chunk.position * chunkSize).toVec3f()
                 Renderer.render(chunk.mesh!!)
             }

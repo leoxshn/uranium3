@@ -9,9 +9,9 @@ import posidon.uranium.graphics.Renderer
 import posidon.uranium.graphics.Shader
 import posidon.uranium.graphics.Texture
 import posidon.uranium.nodes.Node
-import posidon.uranium.nodes.spatial.Camera
+import posidon.uranium.nodes.spatial.Eye
 
-abstract class UIComponent(
+abstract class View(
     name: String
 ) : Node(name) {
 
@@ -55,8 +55,8 @@ abstract class UIComponent(
     }
 
     private fun updateGlobalTransform() {
-        if (parent is UIComponent) {
-            val parentGlobalTransform = (parent as UIComponent).globalTransform
+        if (parent is View) {
+            val parentGlobalTransform = (parent as View).globalTransform
             globalTransform.position.set(parentGlobalTransform.position +
                 (position.toVec2f() * parentGlobalTransform.scale).toVec2i())
             val parentSize = parentGlobalTransform.size
@@ -132,7 +132,7 @@ abstract class UIComponent(
         background = Texture(path)
     }
 
-    override fun render(renderer: Renderer, camera: Camera) {
+    override fun render(renderer: Renderer, eye: Eye) {
         if (visible) {
             GL11.glDisable(GL11.GL_DEPTH_TEST)
             val bg = background

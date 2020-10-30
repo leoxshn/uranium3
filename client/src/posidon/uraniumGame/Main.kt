@@ -3,7 +3,7 @@ package posidon.uraniumGame
 import posidon.uraniumGame.voxel.ChunkMap
 import posidon.uranium.graphics.Renderer
 import posidon.uranium.nodes.Scene
-import posidon.uranium.nodes.spatial.Camera
+import posidon.uranium.nodes.spatial.Eye
 import posidon.uranium.net.Client
 import posidon.uranium.gameLoop.EngineImplementation
 import posidon.uranium.gameLoop.GameLoop
@@ -14,7 +14,7 @@ import posidon.uraniumGame.voxel.Block
 fun main(args: Array<String>) = GameLoop.loop(object : EngineImplementation {
 
     override fun init() {
-        Renderer.camera = Camera("cam")
+        Renderer.eye = Eye("eye")
 
         val loading = LoadingScreenScene()
         Scene.set(loading)
@@ -37,8 +37,8 @@ fun main(args: Array<String>) = GameLoop.loop(object : EngineImplementation {
                     World.initOnRenderThread()
                     Scene.set(World)
                     loading.destroy()
-                    Renderer.camera!!.destroy()
-                    Renderer.camera = World.camera
+                    Renderer.eye!!.destroy()
+                    Renderer.eye = World.eye
                 }
             } else Renderer.runOnThread {
                 loading.text.string = "Couldn't connect :("

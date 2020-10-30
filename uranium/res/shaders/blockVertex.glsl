@@ -17,8 +17,8 @@ const float DENSITY = 0.01;
 const float GRADIENT = 1;
 
 void main () {
-    vec4 positionRelativeToCam = view * vec4(position + inVertex, 1.0);
-    gl_Position = projection * positionRelativeToCam;
+    vec4 positionRelativeToEye = view * vec4(position + inVertex, 1.0);
+    gl_Position = projection * positionRelativeToEye;
     normal = inNormal;
     atlasUV = inUV;
 
@@ -32,5 +32,5 @@ void main () {
         uv = vec2(0.0, 0.0);
     }
 
-    visibility = 1;//min(exp(-pow((length(positionRelativeToCam.xyz) * DENSITY), GRADIENT)), 1.0);
+    visibility = 1;//min(exp(-pow((length(positionRelativeToEye.xyz) * DENSITY), GRADIENT)), 1.0);
 }

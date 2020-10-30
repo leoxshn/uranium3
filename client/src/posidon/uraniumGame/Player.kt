@@ -9,7 +9,7 @@ import posidon.uranium.events.PacketReceivedEvent
 import posidon.uranium.input.Input
 import posidon.uranium.events.Event
 import posidon.uranium.events.MouseMovedEvent
-import posidon.uranium.nodes.spatial.Camera
+import posidon.uranium.nodes.spatial.Eye
 import posidon.uranium.net.Client
 import posidon.uraniumGame.net.packets.MovPacket
 import posidon.uranium.input.Key
@@ -20,7 +20,7 @@ import kotlin.math.*
 class Player(
     name: String,
     val world: World
-) : Camera(name) {
+) : Eye(name) {
 
     companion object {
         const val FRICTION = 25f
