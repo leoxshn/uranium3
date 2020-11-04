@@ -11,11 +11,7 @@ uniform vec3 position;
 out vec2 atlasUV;
 out vec2 uv;
 out vec3 normal;
-out float visibility;
 out vec3 toEyeVector;
-
-const float DENSITY = 0.01;
-const float GRADIENT = 1;
 
 void main () {
     vec4 worldPos = vec4(position + inVertex, 1.0);
@@ -35,6 +31,4 @@ void main () {
     }
 
     toEyeVector = (inverse(view) * vec4(0.0, 0.0, 0.0, 1.0)).xyz - worldPos.xyz;
-
-    visibility = 1;//min(exp(-pow((length(positionRelativeToEye.xyz) * DENSITY), GRADIENT)), 1.0);
 }
