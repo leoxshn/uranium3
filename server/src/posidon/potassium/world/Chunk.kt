@@ -1,8 +1,9 @@
 package posidon.potassium.world
 
+import posidon.library.types.Vec3i
 import posidon.potassium.content.Block
 
-class Chunk(val chunkX: Int, val chunkY: Int, val chunkZ: Int) {
+class Chunk(val position: Vec3i) {
 
     private val blocks = arrayOfNulls<Block>(CUBE_SIZE)
 
@@ -16,7 +17,7 @@ class Chunk(val chunkX: Int, val chunkY: Int, val chunkZ: Int) {
     operator fun iterator() = blocks.iterator()
 
     companion object {
-        const val SIZE = 16
+        const val SIZE = 64
         const val CUBE_SIZE = SIZE * SIZE * SIZE
     }
 }

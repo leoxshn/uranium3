@@ -23,6 +23,6 @@ class ChunkPacket(private val chunk: Chunk) : Packet("chunk") {
                     .append(block.shape.ordinal.toByte().toChar())
             }
         }
-        return ("coords:" + chunk.chunkX + ',' + chunk.chunkY + ',' + chunk.chunkZ + '&' + Compressor.compressString(stringBuilder.toString()).newLineEscape())
+        return ("coords:" + chunk.position.x + ',' + chunk.position.y + ',' + chunk.position.z + '&' + Compressor.compressString(stringBuilder.toString(), Chunk.CUBE_SIZE * 8).newLineEscape())
     }
 }

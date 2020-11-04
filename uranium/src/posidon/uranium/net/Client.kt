@@ -15,6 +15,8 @@ object Client {
     private lateinit var input: InputStream
     private lateinit var writer: OutputStreamWriter
 
+    var onClose = {}
+
     fun start(ip: String, port: Int, onEnd: (Boolean) -> Unit) = thread (isDaemon = true) {
         try {
             socket = Socket(ip, port)
@@ -24,17 +26,15 @@ object Client {
 
             onEnd(true)
 
-            thread(name = "uraniumClient") {
-                GameLoop.loop {
-                    try { input.reader(Charsets.UTF_8).forEachLine {
-                        val tokens = it.split('&')
-                        Scene.passEvent(PacketReceivedEvent(System.currentTimeMillis(), it, tokens))
-                    }}
-                    catch (e: EOFException) { stop() }
-                    catch (e: SocketException) { stop() }
-                    catch (e: StreamCorruptedException) { stop() }
-                    catch (e: Exception) { e.printStackTrace() }
-                }
+            thread {
+                try { input.reader(Charsets.UTF_8).forEachLine {
+                    val tokens = it.split('&')
+                    Scene.passEvent(PacketReceivedEvent(System.currentTimeMillis(), it, tokens))
+                }}
+                catch (e: EOFException) { stop() }
+                catch (e: SocketException) { stop() }
+                catch (e: StreamCorruptedException) { stop() }
+                catch (e: Exception) { e.printStackTrace() }
                 stop()
             }
         } catch (e: Exception) {
@@ -59,6 +59,7 @@ object Client {
             input.close()
             socket.close()
         } catch (ignore: Exception) {}
+        onClose()
     }
 
     fun waitForPacket(name: String): String {

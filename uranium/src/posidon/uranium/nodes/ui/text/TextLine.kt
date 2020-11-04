@@ -9,24 +9,24 @@ import posidon.uranium.nodes.ui.View
 
 class TextLine(
     name: String,
-    font: MonospaceFont
+    var font: MonospaceFont
 ) : View(name) {
-
-    var font = font
-        set(value) {
-            field = value
-            renderGlyphSize.set(value.glyphWidth.toFloat() / value.texture.width, value.glyphHeight.toFloat() / value.texture.height)
-        }
 
     val color = Vec3f(1f, 1f, 1f)
     var string: String? = null
         set(value) {
             field = value
-            uvs = font.getUVs(value ?: "")
+            val v = value ?: ""
+            val u = font.getUVs(v)
+            if (u == null) {
+                Renderer.runOnThread {
+                    uvs = font.getUVs(v)!!
+                }
+            }
+            else uvs = u
         }
 
     private var uvs = arrayOf<Vec2f>()
-    private val renderGlyphSize = Vec2f(font.glyphWidth.toFloat() / font.texture.width, font.glyphHeight.toFloat() / font.texture.height)
     private val textRenderSize: Vec2f = Vec2f.zero()
 
     override fun update(delta: Double) {
@@ -50,7 +50,7 @@ class TextLine(
             textShader["position"] = renderPosition
             textShader["size"] = textRenderSize
 
-            textShader["glyphSize"] = renderGlyphSize
+            textShader["glyphSize"] = font.renderGlyphSize ?: Vec2f.zero()
             textShader["color"] = color
             textShader["text"] = uvs
             textShader["textLength"] = uvs.size

@@ -10,9 +10,9 @@ object ReceivedPacketHandler {
                 val coords = tokens[1].split(',')
                 player.triggerTickEvent {
                     position.set(coords[0].toFloat(), coords[1].toFloat(), coords[2].toFloat())
-                    Console.beforeCmdLine {
+                    /*Console.beforeCmdLine {
                         Console.printInfo(player.playerName!!, " -> " + player.position.x + " / " + player.position.y + " / " + player.position.z)
-                    }
+                    }*/
                 }
             }
             else -> Console.beforeCmdLine {

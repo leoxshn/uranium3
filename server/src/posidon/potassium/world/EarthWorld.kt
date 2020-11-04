@@ -6,7 +6,4 @@ class EarthWorld(seed: Long) : World() {
 
     override val generator = EarthWorldGenerator(seed)
     override val name = "terra"
-    override fun tick() {
-
-    }
 }

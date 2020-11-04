@@ -39,7 +39,6 @@ abstract class Scene(name: String) : Node(name) {
          * Replaces the current root with [root]
          */
         fun set(scene: Scene) {
-            this.currentScene.destroy()
             this.currentScene = scene
         }
 

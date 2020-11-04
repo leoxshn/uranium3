@@ -1,6 +1,7 @@
 package posidon.potassium.world.gen
 
 import posidon.library.types.Vec2i
+import posidon.library.types.Vec3i
 import posidon.potassium.content.Block
 import posidon.potassium.content.Material
 import posidon.potassium.tools.OpenSimplexNoise
@@ -70,10 +71,10 @@ class EarthWorldGenerator(seed: Long) : WorldGenerator() {
         return blockF > 0.5
     }
 
-    override fun genChunk(chunkX: Int, chunkY: Int, chunkZ: Int): Chunk {
-        val chunk = Chunk(chunkX, chunkY, chunkZ)
-        val absChunkX = chunkX * Chunk.SIZE
-        val absChunkZ = chunkZ * Chunk.SIZE
+    override fun genChunk(chunkPos: Vec3i): Chunk {
+        val chunk = Chunk(chunkPos)
+        val absChunkX = chunkPos.x * Chunk.SIZE
+        val absChunkZ = chunkPos.z * Chunk.SIZE
 
         for (x in 0 until Chunk.SIZE) for (z in 0 until Chunk.SIZE) {
 
@@ -82,7 +83,7 @@ class EarthWorldGenerator(seed: Long) : WorldGenerator() {
 
             val (height, flatness) = getHeightAndFlatness(absX, absZ)
 
-            val absChunkY = chunkY * Chunk.SIZE
+            val absChunkY = chunkPos.y * Chunk.SIZE
 
             for (y in 0 until Chunk.SIZE) {
                 val absY = (absChunkY + y).toDouble()
@@ -104,5 +105,9 @@ class EarthWorldGenerator(seed: Long) : WorldGenerator() {
             }
         }
         return chunk
+    }
+
+    override fun clearCache() {
+        heightsAndFlatnesses.clear()
     }
 }

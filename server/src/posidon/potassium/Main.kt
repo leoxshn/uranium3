@@ -16,17 +16,15 @@ fun main(args: Array<String>) {
 	Worlds.start(EarthWorld(7480135))
 
 	var lastTime: Long = System.nanoTime()
-	val ns: Double = 1000000000.0 / 60.0
 	var delta = 0.0
 	loop {
 		val now: Long = System.nanoTime()
-		delta += (now - lastTime) / ns
-		lastTime = now
-		while (delta >= 1) {
-			Globals.tick()
-			delta--
+		delta += (now - lastTime) / 1000000000.0
+		while (delta >= 0.001) {
+			Globals.tick(delta)
+			delta = 0.0
 		}
-		TimeUnit.NANOSECONDS.sleep((ns - (now - lastTime)).toLong())
+		lastTime = now
 	}
 }
 

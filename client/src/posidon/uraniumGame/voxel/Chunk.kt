@@ -9,6 +9,6 @@ class Chunk(
 ) : VoxelChunk<Block>(position, chunkMap) {
 
     companion object {
-        const val SIZE = 16
+        const val SIZE = 64
     }
 }

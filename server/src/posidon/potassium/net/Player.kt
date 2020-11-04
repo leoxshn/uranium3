@@ -7,17 +7,23 @@ import posidon.potassium.net.packets.BlockDictionaryPacket
 import posidon.potassium.net.packets.Packet
 import posidon.potassium.print
 import posidon.library.types.Vec3i
+import posidon.potassium.net.packets.ChunkPacket
+import posidon.potassium.world.Chunk
 import posidon.potassium.world.World
 import java.io.*
 import java.net.Socket
 import java.net.SocketException
+import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.collections.ArrayList
+import kotlin.concurrent.thread
 
-class Player(private val socket: Socket) : Thread(socket.inetAddress.hostAddress) {
+class Player(
+    private val socket: Socket
+) : Thread(socket.inetAddress.hostAddress) {
 
     private val output: OutputStream = socket.getOutputStream()
     private val input: InputStream = socket.getInputStream()
-    private val tickEventQueue = ArrayList<Player.() -> Unit>()
+    private val tickEventQueue = ConcurrentLinkedQueue<Player.() -> Unit>()
 
     val sentChunks = ArrayList<Vec3i>()
 
@@ -35,8 +41,13 @@ class Player(private val socket: Socket) : Thread(socket.inetAddress.hostAddress
 
     private val writer = OutputStreamWriter(output, Charsets.UTF_8)
 
+    fun send(chunk: Chunk) {
+        send(ChunkPacket(chunk))
+        sentChunks.add(chunk.position)
+    }
+
     fun send(packet: Packet) {
-        try {
+        if (running) try {
             writer.write(packet.toString())
             writer.write(0x0a)
             writer.flush()
@@ -48,6 +59,7 @@ class Player(private val socket: Socket) : Thread(socket.inetAddress.hostAddress
     var world: World? = null
         set(value) {
             field?.players?.remove(this)
+            sentChunks.clear()
             field = value
             field?.players?.add(this)
         }
@@ -69,26 +81,39 @@ class Player(private val socket: Socket) : Thread(socket.inetAddress.hostAddress
             }
         } catch (e: IOException) { e.print() }
 
-        var lastTime: Long = System.nanoTime()
-        val amountOfTicks = 60.0
-        val ns: Double = 1000000000.0 / amountOfTicks
-        var delta = 0.0
+        thread {
+            var lastTime: Long = System.nanoTime()
+            val amountOfTicks = 60.0
+            val ns: Double = 1000000000.0 / amountOfTicks
+            var delta = 0.0
+
+            while (running) {
+                val now: Long = System.nanoTime()
+                delta += (now - lastTime) / ns
+                lastTime = now
+                if (delta >= 1) {
+                    tick()
+                    delta--
+                }
+            }
+        }
 
         while (running) {
-            var string = ""
-            try { string = input.bufferedReader(Charsets.UTF_8).readLine() } catch (e: Exception) {}
-            if (string.isEmpty() && running) disconnect()
-            else ReceivedPacketHandler(this, string)
-
-            val now: Long = System.nanoTime()
-            delta += (now - lastTime) / ns
-            lastTime = now
-            if (delta >= 1) { tick(); delta-- }
+            var string: String? = ""
+            try {
+                string = input.bufferedReader(Charsets.UTF_8).readLine()
+            }
+            catch (e: SocketException) {}
+            catch (e: Exception) { e.print() }
+            if (string.isNullOrEmpty() && running) {
+                disconnect()
+            }
+            else if (string != null) ReceivedPacketHandler(this, string)
         }
     }
 
     private inline fun tick() {
-        if (tickEventQueue.size > 1) Console.beforeCmdLine {
+        if (tickEventQueue.size > 3) Console.beforeCmdLine {
             Console.printProblem(playerName!!, " is sending packets to fast! (${tickEventQueue.size} per tick)")
         }
         tickEventQueue.removeIf { it(); true }

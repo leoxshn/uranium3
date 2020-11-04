@@ -3,8 +3,12 @@ package posidon.uranium.voxel
 import posidon.library.types.Vec3i
 import posidon.uranium.graphics.Renderer
 import posidon.uranium.graphics.Mesh
+import posidon.uranium.graphics.Window
+import posidon.uranium.nodes.spatial.Eye
 import kotlin.collections.ArrayList
 import kotlin.concurrent.thread
+import kotlin.math.cos
+import kotlin.math.sin
 import kotlin.math.sqrt
 
 abstract class VoxelChunk<V : Voxel>(
@@ -51,9 +55,25 @@ abstract class VoxelChunk<V : Voxel>(
     /*var isFull = false
         private set*/
 
-    fun generateMeshAsync(priority: Int) = thread (isDaemon = true, priority = priority) {
+    fun isInFov(eye: Eye) : Boolean {
+        val posRelToEye = absolutePosition - eye.position.toVec3i()
+        val rotY = Math.toRadians((eye.rotation.y - 180).toDouble())
+        val cosRY = cos(rotY)
+        val sinRY = sin(rotY)
+        val rotX = Math.toRadians(eye.rotation.x.toDouble())
+        val cosRX = cos(rotX)
+        val sinRX = sin(rotX)
+        val x = (posRelToEye.x * cosRY - posRelToEye.z * sinRY) * cosRX + posRelToEye.y * sinRX
+        val z = (posRelToEye.z * cosRY + posRelToEye.x * sinRY) * cosRX + posRelToEye.y * sinRX
+        val y = posRelToEye.y * cosRX - z * sinRX
+        val maxXOffset: Double = z * Window.width / Window.height
+        val maxYOffset = z * cosRX + posRelToEye.y * sinRX
+        return z > -chunkMap.chunkSize && x < maxXOffset && x > -maxXOffset && y < maxYOffset && y > -maxYOffset
+    }
 
-        class VoxelFace(val voxel: Voxel) {
+    fun generateMeshAsync(priority: Int, onEnd: () -> Unit = {}) = thread (isDaemon = true, priority = priority) {
+
+        data class VoxelFace(val voxel: Voxel) {
             var transparent = false
             var side = 0
             fun equals(face: VoxelFace?) = face!!.transparent == transparent && face.voxel.id == voxel.id
@@ -281,21 +301,21 @@ abstract class VoxelChunk<V : Voxel>(
 
         Renderer.runOnThread {
             val oldMesh = mesh
-            mesh = Mesh(tmpIndices, listOf(Mesh.VBO(tmpVertices, 3), Mesh.VBO(tmpUv, 2), Mesh.VBO(tmpNormals, 3)))
-            willBeRendered = true
-            /*willBeRendered = chunkMap[position.copy(x = position.x + 1)]?.isFull != true ||
-                chunkMap[position.copy(x = position.x - 1)]?.isFull != true ||
-                chunkMap[position.copy(y = position.y + 1)]?.isFull != true ||
-                chunkMap[position.copy(y = position.y - 1)]?.isFull != true ||
-                chunkMap[position.copy(z = position.z + 1)]?.isFull != true ||
-                chunkMap[position.copy(z = position.z - 1)]?.isFull != true*/
+            if (tmpVertices.isEmpty()) {
+                mesh = null
+                willBeRendered = false
+            } else {
+                mesh = Mesh(tmpIndices, listOf(Mesh.VBO(tmpVertices, 3), Mesh.VBO(tmpUv, 2), Mesh.VBO(tmpNormals, 3)))
+                willBeRendered = true
+            }
             oldMesh?.delete()
-            //println("mesh generated")
         }
 
         vertices.clear()
         indices.clear()
         uv.clear()
         normals.clear()
+
+        onEnd()
     }
 }

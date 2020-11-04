@@ -21,6 +21,12 @@ fun main(args: Array<String>) = GameLoop.loop(object : EngineImplementation {
 
         Block.Textures.init()
 
+        Client.onClose = {
+            Scene.set(loading.apply {
+                text.string = "There was a connection error"
+            })
+        }
+
         Client.start("localhost", 2512) {
             if (it) {
                 Client.send(JoinPacket("leoxshn", "w04m58cyp49y59ti5ts9io3k"))
@@ -34,7 +40,6 @@ fun main(args: Array<String>) = GameLoop.loop(object : EngineImplementation {
                 }
 
                 Renderer.runOnThread {
-                    World.initOnRenderThread()
                     Scene.set(World)
                     loading.destroy()
                     Renderer.eye!!.destroy()
