@@ -33,13 +33,13 @@ class Block(
         private lateinit var specular: Texture
 
         fun init() {
-            albedo = Texture("res/textures/block/albedo.png")
-            specular = Texture("res/textures/block/specular.png")
+            albedo = Texture("client/res/textures/block/albedo.png")
+            specular = Texture("client/res/textures/block/specular.png")
         }
 
         fun destroy() {
-            albedo.delete()
-            specular.delete()
+            albedo.destroy()
+            specular.destroy()
         }
     }
 }

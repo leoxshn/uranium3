@@ -3,6 +3,7 @@ package posidon.uranium.graphics
 import org.lwjgl.opengl.*
 import posidon.uranium.gameLoop.GameLoop
 import posidon.uranium.nodes.Scene
+import posidon.uranium.nodes.environment.Sun
 import posidon.uranium.nodes.spatial.Eye
 import posidon.uranium.nodes.ui.View
 import posidon.uranium.voxel.VoxelChunkMap
@@ -66,10 +67,12 @@ object Renderer {
 
         View.init()
         VoxelChunkMap.init()
+        Sun.init()
     }
 
     internal fun destroy() {
         GL20.glUseProgram(0)
+        Sun.destroy()
         VoxelChunkMap.destroy()
         View.destroy()
     }

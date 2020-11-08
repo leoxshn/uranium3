@@ -60,7 +60,7 @@ class Mesh(
         }
     }
 
-    fun delete() {
+    fun destroy() {
         bind()
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0)
         for (i in vboIdList.indices) {

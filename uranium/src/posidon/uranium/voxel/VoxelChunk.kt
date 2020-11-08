@@ -28,7 +28,7 @@ abstract class VoxelChunk<V : Voxel>(
     fun destroy() {
         willBeRendered = false
         Renderer.runOnThread {
-            mesh?.delete()
+            mesh?.destroy()
         }
     }
 
@@ -308,7 +308,7 @@ abstract class VoxelChunk<V : Voxel>(
                 mesh = Mesh(tmpIndices, listOf(Mesh.VBO(tmpVertices, 3), Mesh.VBO(tmpUv, 2), Mesh.VBO(tmpNormals, 3)))
                 willBeRendered = true
             }
-            oldMesh?.delete()
+            oldMesh?.destroy()
         }
 
         vertices.clear()

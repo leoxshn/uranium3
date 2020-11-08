@@ -10,6 +10,6 @@ class CrossHair(name: String) : View(name) {
         transform.size.set(32, 32)
         transform.keepAspectRatio = true
         gravity = Gravity.CENTER
-        setBackgroundPath("res/textures/ui/crosshair.png")
+        setBackgroundPath("client/res/textures/ui/crosshair.png")
     }
 }

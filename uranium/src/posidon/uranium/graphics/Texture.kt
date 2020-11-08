@@ -7,12 +7,11 @@ import org.lwjgl.system.MemoryStack
 import java.nio.ByteBuffer
 import kotlin.math.min
 
-class Texture(filename: String?) {
+class Texture(filename: String) {
 
-    private val id: Int = loadTexture("client/$filename")
+    private val id: Int = loadTexture(filename)
 
-    fun bind() = GL11.glBindTexture(GL11.GL_TEXTURE_2D, id)
-    fun delete() = GL11.glDeleteTextures(id)
+    fun destroy() = GL11.glDeleteTextures(id)
 
     var width = 0
     var height = 0
@@ -50,10 +49,10 @@ class Texture(filename: String?) {
     override fun toString() = "texture { id: $id, w: $width, h: $height }"
 
     companion object {
-        fun bind(vararg textures: Texture) {
+        fun bind(vararg textures: Texture?) {
             for (i in textures.indices) {
                 GL13.glActiveTexture(GL13.GL_TEXTURE0 + i)
-                textures[i].bind()
+                GL11.glBindTexture(GL11.GL_TEXTURE_2D, textures[i]?.id ?: 0)
             }
             GL13.glActiveTexture(GL13.GL_TEXTURE0)
         }

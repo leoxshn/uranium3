@@ -1,6 +1,5 @@
 package posidon.uraniumGame
 
-import posidon.library.types.Matrix4f
 import posidon.library.types.Vec2f
 import posidon.library.types.Vec3f
 import posidon.uranium.graphics.Window
@@ -15,29 +14,43 @@ import posidon.uraniumGame.net.packets.MovPacket
 import posidon.uranium.input.Key
 import posidon.uranium.events.KeyPressedEvent
 import posidon.uranium.events.MouseButtonPressedEvent
+import posidon.uranium.nodes.Scene
+import posidon.uranium.nodes.spatial.BoundingBox
+import posidon.uranium.nodes.spatial.Spatial
 import kotlin.math.*
 
 class Player(
     name: String,
     val world: World
-) : Eye(name) {
+) : Spatial(name) {
 
-    companion object {
-        const val FRICTION = 25f
+    val eye = Eye("eye").apply {
+        position.y = 1f
     }
 
-    var moveSpeed = 50f
-    var jumpForce = 50f
-    var sensitivity = 0.4f
+    val boundingBox = BoundingBox("hitpox").apply {
+        size.set(.6f, 2.6f, .6f)
+    }
+
+    init {
+        add(eye)
+        add(boundingBox)
+    }
+
+    var moveSpeed = 18f
+    var jumpForce = 32f
+    var sensitivity = 0.35f
     var gravity = false
 
     private val velocity = Vec3f.zero()
     private val oldVelocity = Vec3f.zero()
 
+    val legPos get() = position.copy(y = position.y - 2)
+
     override fun update(delta: Double) {
 
-        val movX by lazy { sin(Math.toRadians(rotation.y.toDouble())).toFloat() }
-        val movZ by lazy { cos(Math.toRadians(rotation.y.toDouble())).toFloat() }
+        val movX by lazy { sin(Math.toRadians(eye.rotation.y.toDouble())).toFloat() }
+        val movZ by lazy { cos(Math.toRadians(eye.rotation.y.toDouble())).toFloat() }
 
         val isW = Input.isKeyDown(Key.W)
         val isA = Input.isKeyDown(Key.A)
@@ -78,10 +91,9 @@ class Player(
         velocity.selfMultiply(moveSpeed)
 
         if (gravity) {
-            val legPos = position.copy(y = position.y - 2)
-            if (world.getBlock(legPos) == null) {
+            if (world.chunkMap.getBlock(legPos) == null) {
                 velocity.y -= world.gravity
-                velocity.selfBlend(oldVelocity, min(delta.toFloat() * FRICTION, 1f))
+                velocity.selfBlend(oldVelocity, min(delta.toFloat().pow(1.35f) * FRICTION, 1f))
             } else {
                 velocity.selfBlend(oldVelocity, min(delta.toFloat() * FRICTION, 1f))
                 if (Input.isKeyDown(Key.SPACE)) {
@@ -92,17 +104,23 @@ class Player(
                     oldVelocity.y = 0f
                 }
             }
+        } else {
+            velocity.selfBlend(oldVelocity, min(delta.toFloat().pow(1.1f) * FRICTION, 1f))
         }
 
         oldVelocity.set(velocity)
         velocity.selfMultiply(delta.toFloat())
 
-        position.selfAdd(velocity)
+        if (gravity) {
+            moveAndSlide(boundingBox, velocity)
+        } else {
+            position.selfAdd(velocity)
+        }
 
         if (velocity.length != 0f) {
             Client.send(MovPacket(position))
+            eye.updateMatrix()
         }
-        viewMatrix = Matrix4f.view(position, rotation)
     }
 
     private var timeOfLastSpacePress = 0L
@@ -111,13 +129,14 @@ class Player(
         super.onEvent(event)
         when (event) {
             is MouseMovedEvent -> {
-                rotation += Vec2f(
+                eye.rotation += Vec2f(
                     -sensitivity * event.cursorMovement.y,
                     -sensitivity * event.cursorMovement.x)
-                if (rotation.x > 90) rotation.x = 90f
-                else if (rotation.x < -90) rotation.x = -90f
-                if (rotation.y > 360) rotation.y -= 360f
-                else if (rotation.y < 0) rotation.y += 360f
+                if (eye.rotation.x > 90) eye.rotation.x = 90f
+                else if (eye.rotation.x < -90) eye.rotation.x = -90f
+                if (eye.rotation.y > 360) eye.rotation.y -= 360f
+                else if (eye.rotation.y < 0) eye.rotation.y += 360f
+                eye.updateMatrix()
             }
             is PacketReceivedEvent -> {
                 when (event.tokens[0]) {
@@ -127,7 +146,7 @@ class Player(
                     }
                     "rot" -> {
                         val coords = event.tokens[1].split(',')
-                        rotation.set(coords[0].toFloat(), coords[1].toFloat())
+                        eye.rotation.set(coords[0].toFloat(), coords[1].toFloat())
                     }
                     "playerInfo" -> {
                         for (token in event.tokens) {
@@ -150,8 +169,8 @@ class Player(
                     Key.F11 -> Window.isFullscreen = !Window.isFullscreen
                     Key.ESCAPE -> Window.mouseLocked = false
                     Key.C -> when (event.action) {
-                        Input.PRESS -> fov = 20f
-                        Input.RELEASE -> fov = 70f
+                        Input.PRESS -> eye.fov = 20f
+                        Input.RELEASE -> eye.fov = 70f
                     }
                     Key.SPACE -> {
                         if (event.action == Input.PRESS) {
@@ -170,5 +189,9 @@ class Player(
                 if (event.button == Button.MOUSE_LEFT) Window.mouseLocked = true
             }
         }
+    }
+
+    companion object {
+        const val FRICTION = 30f
     }
 }

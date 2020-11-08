@@ -3,7 +3,7 @@ package posidon.uraniumGame.ui
 import posidon.library.types.Vec2f
 import posidon.uranium.nodes.ui.text.MonospaceFont
 
-class Font : MonospaceFont("res/textures/ui/font.png") {
+class Font : MonospaceFont("client/res/textures/ui/font.png") {
 
     override val glyphWidth = 5
     override val glyphHeight = 7

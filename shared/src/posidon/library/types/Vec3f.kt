@@ -1,6 +1,8 @@
 package posidon.library.types
 
 import java.util.*
+import kotlin.math.abs
+import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
 data class Vec3f(var x: Float, var y: Float, var z: Float) {
@@ -21,6 +23,7 @@ data class Vec3f(var x: Float, var y: Float, var z: Float) {
     override fun hashCode() = Objects.hash(x, y, z)
     override fun toString() = "vec3f($x, $y, $z)"
     inline fun toVec3i() = Vec3i(x.toInt(), y.toInt(), z.toInt())
+    inline fun roundToVec3i() = Vec3i(x.roundToInt(), y.roundToInt(), z.roundToInt())
 
     companion object {
         fun blend(v1: Vec3f, v2: Vec3f, ratio: Float): Vec3f {
@@ -43,7 +46,7 @@ data class Vec3f(var x: Float, var y: Float, var z: Float) {
     inline operator fun times(other: Float) = Vec3f(x * other, y * other, z * other)
     inline operator fun div(other: Vec3f) = Vec3f(x / other.x, y / other.y, z / other.z)
     inline operator fun div(float: Float) = Vec3f(x / float, y / float, z / float)
-    inline fun normalize() = if (length == 0f) Vec3f(0f, 0f, 0f) else this / length
+    inline fun normalize() = if (length == 0f) zero() else this / length
     inline fun dot(other: Vec3f) = x * other.x + y * other.y + z * other.z
 
 

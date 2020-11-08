@@ -23,7 +23,7 @@ abstract class MonospaceFont(path: String) {
     }
 
     internal fun bind() {
-        texture?.bind()
+        Texture.bind(texture)
     }
 
     internal fun getUVs(string: String) = if (texture == null) null else Array(string.length) {
@@ -33,6 +33,6 @@ abstract class MonospaceFont(path: String) {
     }
 
     fun destroy() {
-        texture?.delete()
+        texture?.destroy()
     }
 }

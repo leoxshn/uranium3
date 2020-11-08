@@ -26,37 +26,38 @@ abstract class Scene(name: String) : Node(name) {
 
     companion object {
 
-        private var currentScene: Scene = object : Scene("") {}
+        internal var current: Scene = object : Scene("") {}
+            private set
 
-        operator fun get(path: String) = currentScene[path]
+        operator fun get(path: String) = current[path]
 
         /**
          * The object handling atmosphere-related stuff
          */
-        val environment get() = currentScene.environment
+        val environment get() = current.environment
 
         /**
          * Replaces the current root with [root]
          */
         fun set(scene: Scene) {
-            this.currentScene = scene
+            this.current = scene
         }
 
         /**
          * Passes an [event] to all nodes.
          * Events are handled in the [Node.onEvent] function
          */
-        fun passEvent(event: Event) = currentScene.passEvent(event)
+        fun passEvent(event: Event) = current.passEvent(event)
 
-        internal fun update(delta: Double) = currentScene.allChildren {
+        internal fun update(delta: Double) = current.allChildren {
             this.update(delta)
         }
 
-        internal fun render(renderer: Renderer, eye: Eye) = currentScene.allChildren {
+        internal fun render(renderer: Renderer, eye: Eye) = current.allChildren {
             this.render(renderer, eye)
         }
 
-        internal fun destroy() = currentScene.allChildren {
+        internal fun destroy() = current.allChildren {
             this.destroy()
         }
     }

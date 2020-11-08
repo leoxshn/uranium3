@@ -1,15 +1,19 @@
 package posidon.uranium.voxel
 
 import org.lwjgl.opengl.GL11
+import posidon.library.types.Vec3f
 import posidon.library.types.Vec3i
 import posidon.uranium.graphics.Renderer
 import posidon.uranium.graphics.Shader
 import posidon.uranium.nodes.Node
 import posidon.uranium.nodes.Scene
+import posidon.uranium.nodes.spatial.BoundingBox
+import posidon.uranium.nodes.spatial.Collider
 import posidon.uranium.nodes.spatial.Eye
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.math.floor
 
-abstract class VoxelChunkMap<C : VoxelChunk<*>>(name: String) : Node(name) {
+abstract class VoxelChunkMap<C : VoxelChunk<*>>(name: String) : Node(name), Collider {
 
     abstract val chunkSize: Int
 
@@ -40,7 +44,7 @@ abstract class VoxelChunkMap<C : VoxelChunk<*>>(name: String) : Node(name) {
         blockShader["view"] = eye.viewMatrix
         blockShader["skyColor"] = Scene.environment.skyColor
         blockShader["skyLight"] = Scene.environment.skyLight
-        blockShader["sunNormal"] = Scene.environment.sunNormal
+        blockShader["sunNormal"] = Scene.environment.sun?.normal ?: Vec3f.ZERO
         blockShader["projection"] = Renderer.projectionMatrix
 
         preRender(blockShader)
@@ -59,5 +63,34 @@ abstract class VoxelChunkMap<C : VoxelChunk<*>>(name: String) : Node(name) {
         for (key in map.keys) {
             map.remove(key)!!.destroy()
         }
+    }
+
+    fun getBlock(position: Vec3f) = getBlock(floor(position.x).toInt(), floor(position.y).toInt(), floor(position.z).toInt())
+    fun getBlock(position: Vec3i) = getBlock(position.x, position.y, position.z)
+    fun getBlock(x: Int, y: Int, z: Int): Voxel? {
+        val smallX = if (x % chunkSize < 0) chunkSize + x % chunkSize else x % chunkSize
+        val smallY = if (y % chunkSize < 0) chunkSize + y % chunkSize else y % chunkSize
+        val smallZ = if (z % chunkSize < 0) chunkSize + z % chunkSize else z % chunkSize
+        val chunkPos = Vec3i(floor(x.toFloat() / chunkSize).toInt(), floor(y.toFloat() / chunkSize).toInt(), floor(z.toFloat() / chunkSize).toInt())
+        return this[chunkPos]?.get(smallX, smallY, smallZ)
+    }
+
+    override fun collide(point: Vec3f): Boolean {
+        return getBlock(point.x.toInt(), point.y.toInt(), point.z.toInt()) != null
+    }
+
+    override fun collide(boundingBox: BoundingBox): Boolean {
+        val o = boundingBox.getRealOrigin().roundToVec3i()
+        val e = o + boundingBox.size.roundToVec3i()
+
+        //println("$o, $e")
+
+        for (x in o.x..e.x) for (y in o.y..e.y) for (z in o.z..e.z) {
+            if (getBlock(x, y, z) != null) {
+                return true
+            }
+        }
+
+        return false
     }
 }

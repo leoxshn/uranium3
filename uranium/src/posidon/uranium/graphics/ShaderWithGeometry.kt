@@ -2,7 +2,6 @@ package posidon.uranium.graphics
 
 import org.lwjgl.opengl.*
 import org.lwjgl.system.MemoryUtil
-import posidon.library.types.Matrix4f
 import posidon.library.types.Vec2f
 import posidon.library.types.Vec3f
 import posidon.library.util.Resources

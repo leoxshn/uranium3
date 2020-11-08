@@ -1,6 +1,5 @@
 package posidon.uranium.graphics
 
-import posidon.library.types.Matrix4f
 import kotlin.math.tan
 
 class ProjectionMatrix internal constructor(fov: Float, aspectRatio: Float, near: Float, far: Float) : Matrix4f() {

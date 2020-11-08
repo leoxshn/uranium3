@@ -1,5 +1,7 @@
-package posidon.library.types
+package posidon.uranium.graphics
 
+import posidon.library.types.Vec2f
+import posidon.library.types.Vec3f
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.tan
@@ -60,20 +62,55 @@ open class Matrix4f {
             return result
         }
 
-        fun rotate(angle: Float, axis: Vec3f): Matrix4f {
+        fun rotateX(radians: Double): Matrix4f {
             val result = identity()
-            val cos = cos(Math.toRadians(angle.toDouble())).toFloat()
-            val sin = sin(Math.toRadians(angle.toDouble())).toFloat()
+            val cos = cos(radians).toFloat()
+            val sin = sin(radians).toFloat()
             val c = 1 - cos
-            result[0, 0] = cos + axis.x * axis.x * c
-            result[0, 1] = axis.x * axis.y * c - axis.z * sin
-            result[0, 2] = axis.x * axis.z * c + axis.y * sin
-            result[1, 0] = axis.y * axis.x * c + axis.z * sin
-            result[1, 1] = cos + axis.y * axis.y * c
-            result[1, 2] = axis.y * axis.z * c - axis.x * sin
-            result[2, 0] = axis.z * axis.x * c - axis.y * sin
-            result[2, 1] = axis.z * axis.y * c + axis.x * sin
-            result[2, 2] = cos + axis.z * axis.z * c
+            result[0, 0] = cos + c
+            result[0, 1] = 0f
+            result[0, 2] = 0f
+            result[1, 0] = 0f
+            result[1, 1] = cos
+            result[1, 2] = -sin
+            result[2, 0] = 0f
+            result[2, 1] = sin
+            result[2, 2] = cos
+            return result
+        }
+
+
+        fun rotateY(radians: Double): Matrix4f {
+            val result = identity()
+            val cos = cos(radians).toFloat()
+            val sin = sin(radians).toFloat()
+            val c = 1 - cos
+            result[0, 0] = cos
+            result[0, 1] = 0f
+            result[0, 2] = sin
+            result[1, 0] = 0f
+            result[1, 1] = cos + c
+            result[1, 2] = 0f
+            result[2, 0] = -sin
+            result[2, 1] = 0f
+            result[2, 2] = cos
+            return result
+        }
+
+        fun rotateZ(radians: Double): Matrix4f {
+            val result = identity()
+            val cos = cos(radians).toFloat()
+            val sin = sin(radians).toFloat()
+            val c = 1 - cos
+            result[0, 0] = cos
+            result[0, 1] = -sin
+            result[0, 2] = 0f
+            result[1, 0] = sin
+            result[1, 1] = cos
+            result[1, 2] = 0f
+            result[2, 0] = 0f
+            result[2, 1] = 0f
+            result[2, 2] = cos + c
             return result
         }
 
@@ -85,24 +122,12 @@ open class Matrix4f {
             return result
         }
 
-        fun multiply(a: Matrix4f, b: Matrix4f): Matrix4f {
-            val result = identity()
-            for (i in 0 until SIZE) for (j in 0 until SIZE)
-                result[i, j] = a[i, 0] * b[0, j] + a[i, 1] * b[1, j] + a[i, 2] * b[2, j] + a[i, 3] * b[3, j]
-            return result
-        }
-
         fun transform(position: Vec3f, rotation: Vec3f, scale: Vec3f): Matrix4f {
-            val rotX = rotate(rotation.x, Vec3f(1f, 0f, 0f))
-            val rotY = rotate(rotation.y, Vec3f(0f, 1f, 0f))
-            val rotZ = rotate(rotation.z, Vec3f(0f, 0f, 1f))
+            val rotX = rotateX(Math.toRadians(rotation.x.toDouble()))
+            val rotY = rotateY(Math.toRadians(rotation.y.toDouble()))
+            val rotZ = rotateZ(Math.toRadians(rotation.z.toDouble()))
             return (rotX * rotY * rotZ) * scale(scale) * translate(position)
         }
-
-        fun transform(position: Vec2f, size: Vec2f) = identity().apply {
-            this[0, 0] = size.x
-            this[1, 1] = size.y
-        } * translate(position)
 
         fun projection(fov: Float, aspectRatio: Float, near: Float, far: Float): Matrix4f {
             val result = identity()
@@ -123,8 +148,8 @@ open class Matrix4f {
                 this[3, 1] = -position.y
                 this[3, 2] = -position.z
             }
-            val rotX = rotate(rotation.x, Vec3f(1f, 0f, 0f))
-            val rotY = rotate(rotation.y, Vec3f(0f, 1f, 0f))
+            val rotX = rotateX(Math.toRadians(rotation.x.toDouble()))
+            val rotY = rotateY(Math.toRadians(rotation.y.toDouble()))
             return translation * (rotY * rotX)
         }
     }

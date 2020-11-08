@@ -112,8 +112,8 @@ abstract class View(
 
     private var background: Texture? = null
     fun setBackgroundPath(path: String?) {
-        background?.delete()
-        background = Texture(path)
+        background?.destroy()
+        background = path?.let { Texture(it) }
     }
 
     protected val light = Vec3f(1f, 1f, 1f)
@@ -146,7 +146,7 @@ abstract class View(
                 //GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA)
                 //GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_SRC_ALPHA)
                 shader.bind()
-                bg.bind()
+                Texture.bind(bg)
                 shader["ambientLight"] = calculateLight()
                 shader["position"] = renderPosition
                 shader["size"] = renderSize
@@ -156,7 +156,7 @@ abstract class View(
     }
 
     override fun destroy() {
-        background?.delete()
+        background?.destroy()
     }
 
     companion object {

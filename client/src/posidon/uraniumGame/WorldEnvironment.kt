@@ -5,9 +5,8 @@ import posidon.uranium.events.Event
 import posidon.uranium.events.PacketReceivedEvent
 import posidon.uranium.gameLoop.GameLoop
 import posidon.uranium.nodes.environment.Environment
-import posidon.uranium.nodes.environment.setSunRotationDeg
+import posidon.uranium.nodes.environment.Sun
 import kotlin.math.abs
-import kotlin.math.pow
 
 class WorldEnvironment : Environment {
 
@@ -24,7 +23,8 @@ class WorldEnvironment : Environment {
     override val skyColor = Vec3f.zero()
     override val skyLight = Vec3f.zero()
     override val ambientLight = Vec3f.zero()
-    override val sunNormal = Vec3f(0f, 1f, 0f)
+
+    override var sun: Sun? = null
 
     var time = MAX_TIME / 2.0
     var timeSpeed = 1
@@ -39,7 +39,7 @@ class WorldEnvironment : Environment {
         skyLight.set(Vec3f.blend(SKY_LIGHT_NIGHT, SKY_LIGHT_DAY, a))
         ambientLight.set(Vec3f.blend(AMBIENT_LIGHT_NIGHT, AMBIENT_LIGHT_DAY, a))
 
-        setSunRotationDeg(a * 180.0)
+        sun?.setSunRotationDeg(a * 180.0)
     }
 
     override fun onEvent(event: Event) {
