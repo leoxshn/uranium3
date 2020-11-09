@@ -5,13 +5,14 @@ import org.lwjgl.opengl.GL15
 import org.lwjgl.opengl.GL20
 import org.lwjgl.opengl.GL30
 import org.lwjgl.system.MemoryUtil
+import posidon.uranium.nodes.ui.View
 import java.nio.FloatBuffer
 import java.nio.IntBuffer
 import java.util.ArrayList
 
 class Mesh(
     indices: IntArray,
-    vbos: List<VBO>
+    vararg vbos: VBO
 ) {
 
     class VBO (
@@ -75,5 +76,27 @@ class Mesh(
     internal fun bind() {
         GL30.glBindVertexArray(vaoId)
         GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, vboIdList[0])
+    }
+
+    companion object {
+
+        /**
+         * Mesh of a quad.
+         * Used for [View]s
+         */
+        lateinit var QUAD: Mesh private set
+
+        fun init() {
+            QUAD = Mesh(intArrayOf(0, 1, 3, 3, 1, 2), VBO(floatArrayOf(
+                -1f, 1f,
+                -1f, -1f,
+                1f, -1f,
+                1f, 1f
+            ), 2))
+        }
+
+        fun destroy() {
+            QUAD.destroy()
+        }
     }
 }

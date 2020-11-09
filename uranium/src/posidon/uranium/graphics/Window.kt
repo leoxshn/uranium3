@@ -43,21 +43,19 @@ object Window {
      * Sets the window to be fullscreen or not
      */
     var isFullscreen = false
-        set(fullscreen) {
-            if (fullscreen) {
-                GLFW.glfwGetWindowPos(id, intArrayOf(pos[0]), intArrayOf(pos[1]))
-                val videoMode = GLFW.glfwGetVideoMode(GLFW.glfwGetPrimaryMonitor())
-                GLFW.glfwSetWindowMonitor(id, GLFW.glfwGetPrimaryMonitor(), 0, 0, videoMode!!.width(), videoMode.height(), 0)
-            } else GLFW.glfwSetWindowMonitor(id, 0, pos[0], pos[1], width, height, 0)
-            field = fullscreen
+        set(value) {
+            field = value
+            if (value) {
+                GLFW.glfwMaximizeWindow(id)
+            } else {
+                GLFW.glfwRestoreWindow(id)
+            }
         }
 
     /**
      * Background color of the framebuffer
      */
     val backgroundColor = Vec3f(0f, 0f, 0f)
-
-    private val pos = IntArray(2)
 
     internal fun init(width: Int, height: Int) {
         Window.width = width
@@ -82,9 +80,7 @@ object Window {
             return
         }
         val videoMode = GLFW.glfwGetVideoMode(GLFW.glfwGetPrimaryMonitor())
-        pos[0] = (videoMode!!.width() - Window.width) / 2
-        pos[1] = (videoMode.height() - Window.height) / 2
-        GLFW.glfwSetWindowPos(id, pos[0], pos[1])
+        GLFW.glfwSetWindowPos(id, (videoMode!!.width() - Window.width) / 2, (videoMode.height() - Window.height) / 2)
         GLFW.glfwSetWindowSizeLimits(id, 600, 300, -1, -1)
         GLFW.glfwMakeContextCurrent(id)
         GL.createCapabilities()

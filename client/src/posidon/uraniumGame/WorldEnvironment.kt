@@ -13,10 +13,12 @@ class WorldEnvironment : Environment {
     companion object {
         private val SKY_NORMAL = Vec3f(0.4f, 0.58f, 0.72f)
         private val SKY_NIGHT = Vec3f(0f, 0.001f, 0.04f)
+
         private val SKY_LIGHT_DAY = Vec3f(1.2f, 1.16f, 1.13f)
         private val SKY_LIGHT_NIGHT = Vec3f(0f, 0f, 0f)
         private val AMBIENT_LIGHT_DAY = Vec3f(.88f, .885f, .89f)
         private val AMBIENT_LIGHT_NIGHT = Vec3f(0.09f, 0.137f, 0.180f)
+
         private const val MAX_TIME = 600.0
     }
 
@@ -33,11 +35,12 @@ class WorldEnvironment : Environment {
         time += timeSpeed * delta
         time %= MAX_TIME
 
-        val a = abs(((time - MAX_TIME / 2f) / MAX_TIME * 2)).toFloat()
+        val a = (time - MAX_TIME / 2f) / MAX_TIME * 2
+        val absA = abs(a.toFloat())
 
-        skyColor.set(Vec3f.blend(SKY_NIGHT, SKY_NORMAL, a))
-        skyLight.set(Vec3f.blend(SKY_LIGHT_NIGHT, SKY_LIGHT_DAY, a))
-        ambientLight.set(Vec3f.blend(AMBIENT_LIGHT_NIGHT, AMBIENT_LIGHT_DAY, a))
+        skyColor.set(Vec3f.blend(SKY_NIGHT, SKY_NORMAL, absA))
+        skyLight.set(Vec3f.blend(SKY_LIGHT_NIGHT, SKY_LIGHT_DAY, absA))
+        ambientLight.set(Vec3f.blend(AMBIENT_LIGHT_NIGHT, AMBIENT_LIGHT_DAY, absA))
 
         sun?.setSunRotationDeg(a * 180.0)
     }

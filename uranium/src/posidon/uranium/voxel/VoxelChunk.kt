@@ -305,7 +305,7 @@ abstract class VoxelChunk<V : Voxel>(
                 mesh = null
                 willBeRendered = false
             } else {
-                mesh = Mesh(tmpIndices, listOf(Mesh.VBO(tmpVertices, 3), Mesh.VBO(tmpUv, 2), Mesh.VBO(tmpNormals, 3)))
+                mesh = Mesh(tmpIndices, Mesh.VBO(tmpVertices, 3), Mesh.VBO(tmpUv, 2), Mesh.VBO(tmpNormals, 3))
                 willBeRendered = true
             }
             oldMesh?.destroy()

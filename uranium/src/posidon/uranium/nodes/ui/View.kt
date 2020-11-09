@@ -4,10 +4,7 @@ import org.lwjgl.opengl.GL11
 import posidon.library.types.Vec2f
 import posidon.library.types.Vec2i
 import posidon.library.types.Vec3f
-import posidon.uranium.graphics.Window
-import posidon.uranium.graphics.Renderer
-import posidon.uranium.graphics.Shader
-import posidon.uranium.graphics.Texture
+import posidon.uranium.graphics.*
 import posidon.uranium.nodes.Node
 import posidon.uranium.nodes.spatial.Eye
 
@@ -150,7 +147,7 @@ abstract class View(
                 shader["ambientLight"] = calculateLight()
                 shader["position"] = renderPosition
                 shader["size"] = renderSize
-                Renderer.render(Renderer.QUAD_MESH)
+                Renderer.render(Mesh.QUAD)
             }
         }
     }

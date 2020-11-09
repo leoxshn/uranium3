@@ -3,6 +3,7 @@ package posidon.uranium.graphics
 import org.lwjgl.opengl.*
 import posidon.uranium.gameLoop.GameLoop
 import posidon.uranium.nodes.Scene
+import posidon.uranium.nodes.environment.Skybox
 import posidon.uranium.nodes.environment.Sun
 import posidon.uranium.nodes.spatial.Eye
 import posidon.uranium.nodes.ui.View
@@ -31,12 +32,6 @@ object Renderer {
     val projectionMatrix = ProjectionMatrix(0f, 0f, NEAR, FAR)
 
     /**
-     * Mesh of a quad.
-     * Used for [View]s
-     */
-    lateinit var QUAD_MESH: Mesh private set
-
-    /**
      * Renders [mesh]
      */
     fun render(mesh: Mesh) {
@@ -58,23 +53,21 @@ object Renderer {
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA)
         GL13.glActiveTexture(GL13.GL_TEXTURE0)
 
-        QUAD_MESH = Mesh(intArrayOf(0, 1, 3, 3, 1, 2), listOf(Mesh.VBO(floatArrayOf(
-            -1f, 1f,
-            -1f, -1f,
-            1f, -1f,
-            1f, 1f
-        ), 2)))
-
+        Mesh.init()
         View.init()
         VoxelChunkMap.init()
         Sun.init()
+        Skybox.init()
     }
 
     internal fun destroy() {
         GL20.glUseProgram(0)
+
+        Skybox.destroy()
         Sun.destroy()
         VoxelChunkMap.destroy()
         View.destroy()
+        Mesh.destroy()
     }
 
     private val eventQueue = ConcurrentLinkedQueue<() -> Unit>()

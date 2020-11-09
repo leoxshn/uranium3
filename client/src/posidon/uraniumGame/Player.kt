@@ -166,8 +166,8 @@ class Player(
             }
             is KeyPressedEvent -> {
                 when (event.key) {
-                    Key.F11 -> Window.isFullscreen = !Window.isFullscreen
-                    Key.ESCAPE -> Window.mouseLocked = false
+                    Key.F11 -> if (event.action == Input.PRESS) Window.isFullscreen = !Window.isFullscreen
+                    Key.ESCAPE -> if (event.action == Input.PRESS) Window.mouseLocked = false
                     Key.C -> when (event.action) {
                         Input.PRESS -> eye.fov = 20f
                         Input.RELEASE -> eye.fov = 70f

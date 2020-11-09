@@ -2,6 +2,7 @@ package posidon.uranium.nodes.ui.text
 
 import posidon.library.types.Vec2f
 import posidon.library.types.Vec3f
+import posidon.uranium.graphics.Mesh
 import posidon.uranium.graphics.Renderer
 import posidon.uranium.graphics.Window
 import posidon.uranium.nodes.spatial.Eye
@@ -54,7 +55,7 @@ class TextLine(
             textShader["color"] = color
             textShader["text"] = uvs
             textShader["textLength"] = uvs.size
-            Renderer.render(Renderer.QUAD_MESH)
+            Renderer.render(Mesh.QUAD)
         }
     }
 }

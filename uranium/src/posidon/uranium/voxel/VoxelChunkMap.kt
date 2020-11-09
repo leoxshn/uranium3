@@ -81,7 +81,8 @@ abstract class VoxelChunkMap<C : VoxelChunk<*>>(name: String) : Node(name), Coll
 
     override fun collide(boundingBox: BoundingBox): Boolean {
         val o = boundingBox.getRealOrigin().roundToVec3i()
-        val e = o + boundingBox.size.roundToVec3i()
+        val c = o + (boundingBox.size / 2f).roundToVec3i()
+        val e = c + (boundingBox.size / 2f).roundToVec3i()
 
         //println("$o, $e")
 

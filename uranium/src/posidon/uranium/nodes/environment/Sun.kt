@@ -1,10 +1,7 @@
 package posidon.uranium.nodes.environment
 
-import posidon.uranium.graphics.Matrix4f
 import posidon.library.types.Vec3f
-import posidon.uranium.graphics.Renderer
-import posidon.uranium.graphics.Shader
-import posidon.uranium.graphics.Texture
+import posidon.uranium.graphics.*
 import posidon.uranium.nodes.Node
 import posidon.uranium.nodes.spatial.Eye
 import kotlin.math.cos
@@ -33,7 +30,7 @@ class Sun(name: String) : Node(name) {
 
         Texture.bind(texture)
 
-        Renderer.render(Renderer.QUAD_MESH)
+        Renderer.render(Mesh.QUAD)
     }
 
     override fun destroy() {

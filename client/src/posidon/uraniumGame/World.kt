@@ -1,8 +1,7 @@
 package posidon.uraniumGame
 
-import posidon.library.types.Vec3f
-import posidon.library.types.Vec3i
 import posidon.uranium.nodes.Scene
+import posidon.uranium.nodes.environment.Skybox
 import posidon.uranium.nodes.environment.Sun
 import posidon.uranium.nodes.ui.FpsIndicator
 import posidon.uranium.nodes.ui.Gravity
@@ -11,15 +10,14 @@ import posidon.uranium.nodes.ui.text.TextLine
 import posidon.uraniumGame.ui.CrossHair
 import posidon.uraniumGame.ui.Font
 import posidon.uraniumGame.voxel.ChunkMap
-import posidon.uraniumGame.voxel.Block
-import posidon.uraniumGame.voxel.Chunk
-import kotlin.math.floor
 
 object World : Scene("World") {
 
     override val environment = WorldEnvironment()
 
     var gravity = 50f
+
+    val sky = Skybox("sky")
 
     val player = Player("player", this)
 
@@ -29,7 +27,7 @@ object World : Scene("World") {
 
     val chunkMeshThreadCounter = TextLine("node", Font()).apply {
         gravity = Gravity.TOP or Gravity.RIGHT
-        string = "chunkThreads: __"
+        string = "chunkThreads: _"
         size.set(View.WRAP_CONTENT, 21)
     }
 
@@ -45,6 +43,7 @@ object World : Scene("World") {
     }
 
     init {
+        add(sky)
         add(sun)
         add(player)
         add(chunkMap)
