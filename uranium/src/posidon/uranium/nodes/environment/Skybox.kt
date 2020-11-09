@@ -14,10 +14,8 @@ class Skybox(name: String) : Node(name) {
         shader.bind()
 
         shader["projection"] = Renderer.projectionMatrix
-        shader["view"] = eye.rotationMatrix
-
+        shader["rotation"] = eye.rotationMatrix
         shader["skyColor"] = Scene.environment.skyColor
-
         shader["sunNormal"] = Scene.environment.sun?.normal ?: Vec3f.ZERO
 
         renderer.render(CUBE)

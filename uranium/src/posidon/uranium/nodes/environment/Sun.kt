@@ -1,5 +1,6 @@
 package posidon.uranium.nodes.environment
 
+import org.lwjgl.opengl.GL11
 import posidon.library.types.Vec3f
 import posidon.uranium.graphics.*
 import posidon.uranium.nodes.Node
@@ -30,7 +31,11 @@ class Sun(name: String) : Node(name) {
 
         Texture.bind(texture)
 
+        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_DST_ALPHA)
+
         Renderer.render(Mesh.QUAD)
+
+        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA)
     }
 
     override fun destroy() {
