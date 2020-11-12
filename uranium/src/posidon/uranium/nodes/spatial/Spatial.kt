@@ -33,8 +33,22 @@ open class Spatial(
         tpAndCollide(boundingBox, v.copy(x = 0f, y = 0f))
     }
 
+    fun isOnSurface(boundingBox: BoundingBox, normal: Vec3f = Vec3f.UP): Boolean {
+        val r = normal * 0.1f
+        position.selfSubtract(r)
+        val c = checkCollide(boundingBox)
+        position.selfAdd(r)
+        return c
+    }
+
     private fun tpAndCollide(boundingBox: BoundingBox, velocity: Vec3f) {
         position.selfAdd(velocity)
+        if (checkCollide(boundingBox)) {
+            position.selfSubtract(velocity)
+        }
+    }
+
+    private fun checkCollide(boundingBox: BoundingBox): Boolean {
         var didCollide = false
         Scene.current.allChildren {
             if (boundingBox != this && this is Collider && collide(boundingBox)) {
@@ -42,8 +56,6 @@ open class Spatial(
                 return@allChildren
             }
         }
-        if (didCollide) {
-            position.selfSubtract(velocity)
-        }
+        return didCollide
     }
 }

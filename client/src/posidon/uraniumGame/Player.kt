@@ -24,8 +24,9 @@ class Player(
     val world: World
 ) : Spatial(name) {
 
-    val normalFov = 70f
-    val sprintFov = 90f
+    val normalFov = 72f
+    val sprintFov = 95f
+    val zoomFov = 24f
 
     var flySpeed = 24f
 
@@ -38,12 +39,12 @@ class Player(
 
 
     val eye = Eye("eye").apply {
-        position.y = .6f
+        position.y = .8f
         fov = normalFov
     }
 
     val boundingBox = BoundingBox("hitpox").apply {
-        size.set(.6f, 2.2f, .6f)
+        size.set(.6f, 2.4f, .6f)
     }
 
     init {
@@ -53,8 +54,7 @@ class Player(
 
     private val velocity = Vec3f.zero()
     private val oldVelocity = Vec3f.zero()
-
-    private val legPos get() = position.copy(y = position.y - 2)
+    private var targetFov = normalFov
 
     override fun update(delta: Double) {
 
@@ -99,17 +99,16 @@ class Player(
 
         velocity.selfNormalize()
 
-        val transitionSpeed = delta.toFloat() * 12f
         if (isCtrl && velocity.isNotZero()) {
             velocity.selfMultiply(sprintMultiplier)
-            eye.fov = (2f.pow(transitionSpeed) - 1f) * sprintFov / 2f.pow(transitionSpeed) + eye.fov / 2f.pow(transitionSpeed)
+            if (targetFov == normalFov) targetFov = sprintFov
         } else {
-            eye.fov = (2f.pow(transitionSpeed) - 1f) * normalFov / 2f.pow(transitionSpeed) + eye.fov / 2f.pow(transitionSpeed)
+            if (targetFov == sprintFov) targetFov = normalFov
         }
 
         if (gravity) {
             velocity.selfMultiply(moveSpeed)
-            if (world.chunkMap.getBlock(legPos) == null) {
+            if (!isOnSurface(boundingBox)) {
                 velocity.y -= world.gravity
                 velocity.selfBlend(oldVelocity, min(delta.toFloat().pow(1.35f) * FRICTION, 1f))
             } else {
@@ -140,6 +139,9 @@ class Player(
             Client.send(MovPacket(position))
             eye.updateMatrix()
         }
+
+        val transitionSpeed = delta.toFloat() * 15f
+        eye.fov = (2f.pow(transitionSpeed) - 1f) * targetFov / 2f.pow(transitionSpeed) + eye.fov / 2f.pow(transitionSpeed)
     }
 
     private var timeOfLastSpacePress = 0L
@@ -188,8 +190,8 @@ class Player(
                     Key.F11 -> if (event.action == Input.PRESS) Window.isFullscreen = !Window.isFullscreen
                     Key.ESCAPE -> if (event.action == Input.PRESS) Window.mouseLocked = false
                     Key.C -> when (event.action) {
-                        Input.PRESS -> eye.fov = 20f
-                        Input.RELEASE -> eye.fov = 70f
+                        Input.PRESS -> targetFov = zoomFov
+                        Input.RELEASE -> targetFov = normalFov
                     }
                     Key.SPACE -> {
                         if (event.action == Input.PRESS) {
