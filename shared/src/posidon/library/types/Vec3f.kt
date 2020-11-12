@@ -1,9 +1,7 @@
 package posidon.library.types
 
 import java.util.*
-import kotlin.math.abs
-import kotlin.math.roundToInt
-import kotlin.math.sqrt
+import kotlin.math.*
 
 data class Vec3f(var x: Float, var y: Float, var z: Float) {
 
@@ -24,6 +22,9 @@ data class Vec3f(var x: Float, var y: Float, var z: Float) {
     override fun toString() = "vec3f($x, $y, $z)"
     inline fun toVec3i() = Vec3i(x.toInt(), y.toInt(), z.toInt())
     inline fun roundToVec3i() = Vec3i(x.roundToInt(), y.roundToInt(), z.roundToInt())
+    inline fun ceilToVec3i() = Vec3i(ceil(x).toInt(), ceil(y).toInt(), ceil(z).toInt())
+    inline fun floorToVec3i() = Vec3i(floor(x).toInt(), floor(y).toInt(), floor(z).toInt())
+    inline fun truncateToVec3i() = Vec3i(truncate(x).toInt(), truncate(y).toInt(), truncate(z).toInt())
 
     companion object {
         fun blend(v1: Vec3f, v2: Vec3f, ratio: Float): Vec3f {
