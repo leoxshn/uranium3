@@ -24,12 +24,26 @@ class Player(
     val world: World
 ) : Spatial(name) {
 
+    val normalFov = 70f
+    val sprintFov = 90f
+
+    var flySpeed = 24f
+
+    var moveSpeed = 8f
+    var jumpForce = 24f
+    var sensitivity = 0.35f
+    var gravity = false
+
+    var sprintMultiplier = 2.4f
+
+
     val eye = Eye("eye").apply {
-        position.y = 1f
+        position.y = .6f
+        fov = normalFov
     }
 
     val boundingBox = BoundingBox("hitpox").apply {
-        size.set(.6f, 2.6f, .6f)
+        size.set(.6f, 2.2f, .6f)
     }
 
     init {
@@ -37,15 +51,10 @@ class Player(
         add(boundingBox)
     }
 
-    var moveSpeed = 18f
-    var jumpForce = 32f
-    var sensitivity = 0.35f
-    var gravity = false
-
     private val velocity = Vec3f.zero()
     private val oldVelocity = Vec3f.zero()
 
-    val legPos get() = position.copy(y = position.y - 2)
+    private val legPos get() = position.copy(y = position.y - 2)
 
     override fun update(delta: Double) {
 
@@ -56,6 +65,7 @@ class Player(
         val isA = Input.isKeyDown(Key.A)
         val isS = Input.isKeyDown(Key.S)
         val isD = Input.isKeyDown(Key.D)
+        val isCtrl = Input.isKeyDown(Key.LEFT_CTRL)
 
         velocity.set(0f, 0f, 0f)
 
@@ -88,9 +98,17 @@ class Player(
         }
 
         velocity.selfNormalize()
-        velocity.selfMultiply(moveSpeed)
+
+        val transitionSpeed = delta.toFloat() * 12f
+        if (isCtrl && velocity.isNotZero()) {
+            velocity.selfMultiply(sprintMultiplier)
+            eye.fov = (2f.pow(transitionSpeed) - 1f) * sprintFov / 2f.pow(transitionSpeed) + eye.fov / 2f.pow(transitionSpeed)
+        } else {
+            eye.fov = (2f.pow(transitionSpeed) - 1f) * normalFov / 2f.pow(transitionSpeed) + eye.fov / 2f.pow(transitionSpeed)
+        }
 
         if (gravity) {
+            velocity.selfMultiply(moveSpeed)
             if (world.chunkMap.getBlock(legPos) == null) {
                 velocity.y -= world.gravity
                 velocity.selfBlend(oldVelocity, min(delta.toFloat().pow(1.35f) * FRICTION, 1f))
@@ -105,7 +123,8 @@ class Player(
                 }
             }
         } else {
-            velocity.selfBlend(oldVelocity, min(delta.toFloat().pow(1.1f) * FRICTION, 1f))
+            velocity.selfMultiply(flySpeed)
+            velocity.selfBlend(oldVelocity, min(delta.toFloat() * FRICTION, 1f))
         }
 
         oldVelocity.set(velocity)

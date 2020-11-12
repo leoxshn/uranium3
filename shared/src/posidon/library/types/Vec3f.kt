@@ -59,6 +59,8 @@ data class Vec3f(var x: Float, var y: Float, var z: Float) {
     inline fun selfDivide(float: Float) = set(x / float, y / float, z / float)
     inline fun selfNormalize() = if (length == 0f) set(0f, 0f, 0f) else selfDivide(length)
 
+    inline fun isNotZero() = x != 0f || y != 0f || z != 0f
+
     fun selfBlend(other: Vec3f, ratio: Float) {
         val inverseRation = 1f - ratio
         x = x * ratio + other.x * inverseRation

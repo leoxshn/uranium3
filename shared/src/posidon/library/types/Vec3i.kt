@@ -51,4 +51,6 @@ data class Vec3i(var x: Int, var y: Int, var z: Int) {
     inline fun selfDivide(float: Float) = set((x / float).toInt(), (y / float).toInt(), (z / float).toInt())
     inline fun selfDivide(int: Int) = set(x / int, y / int, z / int)
     inline fun selfNormalize() = if (length == 0f) set(0, 0, 0) else selfDivide(length)
+
+    inline fun isNotZero() = x != 0 || y != 0 || z != 0
 }
