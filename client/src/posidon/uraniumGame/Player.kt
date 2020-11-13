@@ -110,7 +110,7 @@ class Player(
             velocity.selfMultiply(moveSpeed)
             if (!isOnSurface(boundingBox)) {
                 velocity.y -= world.gravity
-                velocity.selfBlend(oldVelocity, min(delta.toFloat().pow(1.35f) * FRICTION, 1f))
+                velocity.selfBlend(oldVelocity, min(delta.toFloat().pow(1.35f) * FRICTION / 2f, 1f))
             } else {
                 velocity.selfBlend(oldVelocity, min(delta.toFloat() * FRICTION, 1f))
                 if (Input.isKeyDown(Key.SPACE)) {

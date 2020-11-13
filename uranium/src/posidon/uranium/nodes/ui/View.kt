@@ -135,9 +135,10 @@ abstract class View(
         return maxHeight
     }
 
-    override fun render(renderer: Renderer, eye: Eye) {
+    final override fun render(renderer: Renderer, eye: Eye) {
         if (visible) {
             GL11.glDisable(GL11.GL_DEPTH_TEST)
+            preRender()
             val bg = background
             if (bg != null) {
                 //GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA)
@@ -149,8 +150,12 @@ abstract class View(
                 shader["size"] = renderSize
                 Renderer.render(Mesh.QUAD)
             }
+            postRender()
         }
     }
+
+    open fun preRender() {}
+    open fun postRender() {}
 
     override fun destroy() {
         background?.destroy()

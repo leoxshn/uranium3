@@ -42,20 +42,16 @@ class TextLine(
 
     override fun getContentWidth() = (string?.length ?: 0) * font.glyphWidth * globalTransform.size.y / font.glyphHeight
 
-    override fun render(renderer: Renderer, eye: Eye) {
-        super.render(renderer, eye)
+    override fun postRender() {
+        textShader.bind()
+        font.bind()
+        textShader["position"] = renderPosition
+        textShader["size"] = textRenderSize
 
-        if (visible) {
-            textShader.bind()
-            font.bind()
-            textShader["position"] = renderPosition
-            textShader["size"] = textRenderSize
-
-            textShader["glyphSize"] = font.renderGlyphSize ?: Vec2f.zero()
-            textShader["color"] = color
-            textShader["text"] = uvs
-            textShader["textLength"] = uvs.size
-            Renderer.render(Mesh.QUAD)
-        }
+        textShader["glyphSize"] = font.renderGlyphSize ?: Vec2f.zero()
+        textShader["color"] = color
+        textShader["text"] = uvs
+        textShader["textLength"] = uvs.size
+        Renderer.render(Mesh.QUAD)
     }
 }

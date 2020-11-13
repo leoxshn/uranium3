@@ -7,7 +7,7 @@ import posidon.uranium.nodes.ui.FpsIndicator
 import posidon.uranium.nodes.ui.Gravity
 import posidon.uranium.nodes.ui.View
 import posidon.uranium.nodes.ui.text.TextLine
-import posidon.uraniumGame.ui.CrossHair
+import posidon.uranium.nodes.ui.CrossHair
 import posidon.uraniumGame.ui.Font
 import posidon.uraniumGame.voxel.ChunkMap
 
@@ -15,7 +15,7 @@ object World : Scene("World") {
 
     override val environment = WorldEnvironment()
 
-    var gravity = 50f
+    var gravity = 60f
 
     val sky = Skybox("sky")
 
@@ -23,7 +23,9 @@ object World : Scene("World") {
 
     val chunkMap = ChunkMap("chunks")
 
-    val crossHair = CrossHair("crosshair")
+    val crossHair = CrossHair("crosshair").apply {
+        setBackgroundPath("client/res/textures/ui/crosshair.png")
+    }
 
     val chunkMeshThreadCounter = TextLine("node", Font()).apply {
         gravity = Gravity.TOP or Gravity.RIGHT
