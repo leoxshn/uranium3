@@ -18,5 +18,6 @@ void main () {
     vec4 worldPos = vec4(inVertex, -distance, 1.0) * r * rotation;
     vec4 positionRelativeToEye = view * worldPos;
     gl_Position = projection * positionRelativeToEye;
+    gl_Position.z = 0.0;
     uv = vec2(0.5 + inVertex.x / 2.0, 0.5 - inVertex.y / 2.0);
 }

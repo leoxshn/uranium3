@@ -11,7 +11,6 @@ uniform vec3 position;
 out vec2 atlasUV;
 out vec2 uv;
 out vec3 normal;
-out vec3 toEyeVector;
 
 void main () {
     vec4 worldPos = vec4(position + inVertex, 1.0);
@@ -29,6 +28,4 @@ void main () {
     } else {
         uv = vec2(0.0, 0.0);
     }
-
-    toEyeVector = (inverse(view) * vec4(0.0, 0.0, 0.0, 1.0)).xyz - worldPos.xyz;
 }

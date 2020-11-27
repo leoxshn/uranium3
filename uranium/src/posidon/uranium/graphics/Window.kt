@@ -3,6 +3,7 @@ package posidon.uranium.graphics
 import org.lwjgl.glfw.GLFW
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL11
+import org.lwjgl.opengl.GL30
 import posidon.library.types.Vec3f
 import posidon.uranium.events.WindowResizedEvent
 import posidon.uranium.input.Input
@@ -99,6 +100,7 @@ object Window {
             width = w
             height = h
             GL11.glViewport(0, 0, width, height)
+            FrameBuffer.onWindowResize()
             Scene.passEvent(event)
         }
     }
@@ -110,6 +112,11 @@ object Window {
     }
 
     internal fun swapBuffers() = GLFW.glfwSwapBuffers(id)
+
+    internal fun bindBuffer() {
+        GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0)
+        GL11.glViewport(0, 0, width, height)
+    }
 
     internal fun destroy() {
         GLFW.glfwSetKeyCallback(id, null)?.free()

@@ -53,6 +53,7 @@ object Renderer {
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA)
         GL13.glActiveTexture(GL13.GL_TEXTURE0)
 
+        FrameBuffer.init()
         Mesh.init()
         View.init()
         VoxelChunkMap.init()
@@ -68,15 +69,18 @@ object Renderer {
         VoxelChunkMap.destroy()
         View.destroy()
         Mesh.destroy()
+        FrameBuffer.destroy()
     }
 
     private val eventQueue = ConcurrentLinkedQueue<() -> Unit>()
 
     internal fun loop() {
         while (Window.isOpen && GameLoop.running) {
-            Window.update()
+            FrameBuffer.bind(Window.width, Window.height)
+            FrameBuffer.clear()
             eye?.let { Scene.render(this, it) }
             Window.swapBuffers()
+            Window.update()
 
             val it = eventQueue.iterator()
             while (it.hasNext()) {

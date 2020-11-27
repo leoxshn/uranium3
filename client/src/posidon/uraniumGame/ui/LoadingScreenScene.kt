@@ -9,7 +9,7 @@ class LoadingScreenScene : Scene("loading") {
 
     val text = TextLine("component", Font()).apply {
         string = "Loading..."
-        size.set(View.MATCH_PARENT, 21)
+        size.set(View.MATCH_PARENT, Font.SIZE)
         gravity = Gravity.CENTER
     }
 

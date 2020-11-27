@@ -1,4 +1,4 @@
-#version 150
+#version 420 core
 
 in vec3 position;
 out vec3 coords;

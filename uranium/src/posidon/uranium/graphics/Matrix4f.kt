@@ -32,6 +32,10 @@ open class Matrix4f {
         return result
     }
 
+    override fun toString(): String {
+        return "Matrix4f { " + all.joinToString() + " }"
+    }
+
     companion object {
 
         const val SIZE = 4

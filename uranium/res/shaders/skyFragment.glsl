@@ -1,10 +1,14 @@
-#version 150
+#version 420 core
 
 in vec3 coords;
-out vec4 color;
 
 uniform vec3 skyColor;
 uniform vec3 sunNormal;
+
+layout (location = 0) out vec4 out_Color;
+layout (location = 1) out vec4 out_Normal;
+layout (location = 2) out vec4 out_Specular;
+layout (location = 3) out vec4 out_Glow;
 
 vec3 positiveMix (vec3 a, vec3 b) {
     return vec3(max(a.x, b.x), max(a.y, b.y), max(a.z, b.z));
@@ -22,5 +26,6 @@ void main () {
     vec3 sky = mix(skyColor, positiveMix(skyColor, halo), pow(mixedSunity, 6 - sunsetity * 4) * pow(sunsetity, 3) / 2.8);
     vec3 sun = pow(sunity, 5 - sunsetity * 4) * sqrt(sunsetity * 4) / 2 * halo;
 
-    color = vec4(positiveMix(sky, sun), 1.0);
+    out_Color = vec4(positiveMix(sky, sun), 1.0);
+    out_Normal = vec4(0.0, 0.0, 0.0, 0.0);
 }

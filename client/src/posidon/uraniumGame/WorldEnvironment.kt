@@ -19,7 +19,7 @@ class WorldEnvironment : Environment {
         private val AMBIENT_LIGHT_DAY = Vec3f(.88f, .885f, .89f)
         private val AMBIENT_LIGHT_NIGHT = Vec3f(0.09f, 0.137f, 0.180f)
 
-        private const val MAX_TIME = 600.0
+        private const val MAX_TIME = 20.0
     }
 
     override val skyColor = Vec3f.zero()

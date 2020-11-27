@@ -1,5 +1,6 @@
 package posidon.uraniumGame
 
+import posidon.uranium.graphics.FrameBuffer
 import posidon.uranium.nodes.Scene
 import posidon.uranium.nodes.environment.Skybox
 import posidon.uranium.nodes.environment.Sun
@@ -17,7 +18,7 @@ object World : Scene("World") {
 
     var gravity = 60f
 
-    val sky = Skybox("sky")
+    //val sky = Skybox("sky")
 
     val player = Player("player", this)
 
@@ -30,7 +31,7 @@ object World : Scene("World") {
     val chunkMeshThreadCounter = TextLine("node", Font()).apply {
         gravity = Gravity.TOP or Gravity.RIGHT
         string = "chunkThreads: _"
-        size.set(View.WRAP_CONTENT, 21)
+        size.set(View.WRAP_CONTENT, Font.SIZE)
     }
 
     var chunkMeshThreadCount = 0
@@ -45,14 +46,15 @@ object World : Scene("World") {
     }
 
     init {
-        add(sky)
+        //add(sky)
         add(sun)
         add(player)
         add(chunkMap)
+        add(FrameBuffer)
         add(crossHair)
         add(chunkMeshThreadCounter)
         add(FpsIndicator("fps", Font()).apply {
-            size.set(View.WRAP_CONTENT, 21)
+            size.set(View.WRAP_CONTENT, Font.SIZE)
         })
     }
 }

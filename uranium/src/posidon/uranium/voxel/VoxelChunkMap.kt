@@ -18,7 +18,7 @@ abstract class VoxelChunkMap<C : VoxelChunk<*>>(name: String) : Node(name), Coll
     abstract val chunkSize: Int
 
     companion object {
-        private val blockShader = Shader("/shaders/blockVertex.glsl", /*"/shaders/wireframeGeometry.glsl",*/ "/shaders/blockFragment.glsl")
+        private val blockShader = Shader("/shaders/blockVertex.glsl", "/shaders/blockFragment.glsl")
 
         internal fun init() {
             blockShader.create()
@@ -40,11 +40,7 @@ abstract class VoxelChunkMap<C : VoxelChunk<*>>(name: String) : Node(name), Coll
         GL11.glEnable(GL11.GL_DEPTH_TEST)
 
         blockShader.bind()
-        blockShader["ambientLight"] = Scene.environment.ambientLight
         blockShader["view"] = eye.viewMatrix
-        blockShader["skyColor"] = Scene.environment.skyColor
-        blockShader["skyLight"] = Scene.environment.skyLight
-        blockShader["sunNormal"] = Scene.environment.sun?.normal ?: Vec3f.ZERO
         blockShader["projection"] = Renderer.projectionMatrix
 
         preRender(blockShader)

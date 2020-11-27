@@ -5,8 +5,12 @@ import posidon.uranium.nodes.ui.text.MonospaceFont
 
 class Font : MonospaceFont("client/res/textures/ui/font.png") {
 
+    companion object {
+        const val SIZE = 24
+    }
+
     override val glyphWidth = 5
-    override val glyphHeight = 7
+    override val glyphHeight = 8
 
     override fun getPosition(char: Char): Vec2f = when (char) {
         'A' -> Vec2f(0f, 0f)

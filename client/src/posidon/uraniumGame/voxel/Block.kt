@@ -20,25 +20,29 @@ class Block(
             "stone" -> Vec2f(1f, 0f)
             "moonstone" -> Vec2f(2f, 0f)
             "wood" -> Vec2f(0f, 1f)
+            "light_bricks" -> Vec2f(1f, 1f)
             "moonstone_bricks" -> Vec2f(2f, 1f)
             "slime" -> Vec2f(3f, 0f)
             else -> Vec2f(7f, 7f)
         }
 
         fun bindTileSet() {
-            Texture.bind(albedo, specular)
+            Texture.bind(albedo, emission, specular)
         }
 
         private lateinit var albedo: Texture
+        private lateinit var emission: Texture
         private lateinit var specular: Texture
 
         fun init() {
             albedo = Texture("client/res/textures/block/albedo.png")
+            emission = Texture("client/res/textures/block/emission.png")
             specular = Texture("client/res/textures/block/specular.png")
         }
 
         fun destroy() {
             albedo.destroy()
+            emission.destroy()
             specular.destroy()
         }
     }
