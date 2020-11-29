@@ -16,7 +16,7 @@ class Block(
     object Textures {
 
         fun getUvForId(id: String) = when (id) {
-            "grass" -> Vec2f(0f, 0f)
+            "dirt" -> Vec2f(0f, 0f)
             "stone" -> Vec2f(1f, 0f)
             "moonstone" -> Vec2f(2f, 0f)
             "wood" -> Vec2f(0f, 1f)

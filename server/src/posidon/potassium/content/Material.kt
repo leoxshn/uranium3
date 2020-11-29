@@ -1,7 +1,7 @@
 package posidon.potassium.content
 
 enum class Material(val id: String) {
-    GRASS("grass"),
+    DIRT("dirt"),
     LIGHT_BRICKS("light_bricks"),
     MOONSTONE("moonstone"),
     MOONSTONE_BRICKS("moonstone_bricks"),

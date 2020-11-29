@@ -3,8 +3,6 @@ package posidon.uranium.graphics
 import org.lwjgl.opengl.*
 import posidon.uranium.gameLoop.GameLoop
 import posidon.uranium.nodes.Scene
-import posidon.uranium.nodes.environment.Skybox
-import posidon.uranium.nodes.environment.Sun
 import posidon.uranium.nodes.spatial.Eye
 import posidon.uranium.nodes.ui.View
 import posidon.uranium.voxel.VoxelChunkMap
@@ -53,31 +51,29 @@ object Renderer {
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA)
         GL13.glActiveTexture(GL13.GL_TEXTURE0)
 
-        FrameBuffer.init()
         Mesh.init()
         View.init()
         VoxelChunkMap.init()
-        Sun.init()
-        Skybox.init()
     }
 
     internal fun destroy() {
         GL20.glUseProgram(0)
 
-        Skybox.destroy()
-        Sun.destroy()
         VoxelChunkMap.destroy()
         View.destroy()
         Mesh.destroy()
-        FrameBuffer.destroy()
     }
 
     private val eventQueue = ConcurrentLinkedQueue<() -> Unit>()
 
+    internal interface FrameBuffer {
+        fun bind()
+        fun clear()
+    }
+
     internal fun loop() {
         while (Window.isOpen && GameLoop.running) {
-            FrameBuffer.bind(Window.width, Window.height)
-            FrameBuffer.clear()
+            Scene.nextBuffer(null)
             eye?.let { Scene.render(this, it) }
             Window.swapBuffers()
             Window.update()

@@ -14,6 +14,7 @@ import posidon.uraniumGame.net.packets.MovPacket
 import posidon.uranium.input.Key
 import posidon.uranium.events.KeyPressedEvent
 import posidon.uranium.events.MouseButtonPressedEvent
+import posidon.uranium.graphics.Filter
 import posidon.uranium.nodes.Scene
 import posidon.uranium.nodes.spatial.BoundingBox
 import posidon.uranium.nodes.spatial.Spatial
@@ -21,7 +22,8 @@ import kotlin.math.*
 
 class Player(
     name: String,
-    val world: World
+    val world: World,
+    val speedEffect: Filter
 ) : Spatial(name) {
 
     val normalFov = 72f
@@ -102,8 +104,10 @@ class Player(
         if (isCtrl && velocity.isNotZero()) {
             velocity.selfMultiply(sprintMultiplier)
             if (targetFov == normalFov) targetFov = sprintFov
+            speedEffect.enabled = true
         } else {
             if (targetFov == sprintFov) targetFov = normalFov
+            speedEffect.enabled = false
         }
 
         if (gravity) {

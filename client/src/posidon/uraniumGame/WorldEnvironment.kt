@@ -13,22 +13,18 @@ class WorldEnvironment : Environment {
     companion object {
         private val SKY_NORMAL = Vec3f(0.4f, 0.58f, 0.72f)
         private val SKY_NIGHT = Vec3f(0f, 0.001f, 0.04f)
-
-        private val SKY_LIGHT_DAY = Vec3f(1.2f, 1.16f, 1.13f)
-        private val SKY_LIGHT_NIGHT = Vec3f(0f, 0f, 0f)
         private val AMBIENT_LIGHT_DAY = Vec3f(.88f, .885f, .89f)
         private val AMBIENT_LIGHT_NIGHT = Vec3f(0.09f, 0.137f, 0.180f)
 
-        private const val MAX_TIME = 20.0
+        private const val MAX_TIME = 600.0
     }
 
     override val skyColor = Vec3f.zero()
-    override val skyLight = Vec3f.zero()
     override val ambientLight = Vec3f.zero()
 
-    override var sun: Sun? = null
+    override var sun: Sun? = Sun()
 
-    var time = MAX_TIME / 2.0
+    private var time = MAX_TIME / 2.0
     var timeSpeed = 1
 
     override fun update(delta: Double) {
@@ -39,19 +35,19 @@ class WorldEnvironment : Environment {
         val absA = abs(a.toFloat())
 
         skyColor.set(Vec3f.blend(SKY_NIGHT, SKY_NORMAL, absA))
-        skyLight.set(Vec3f.blend(SKY_LIGHT_NIGHT, SKY_LIGHT_DAY, absA))
         ambientLight.set(Vec3f.blend(AMBIENT_LIGHT_NIGHT, AMBIENT_LIGHT_DAY, absA))
 
-        sun?.setSunRotationDeg(a * 180.0)
+        sun?.light?.set(Vec3f.blend(Sun.LIGHT_NIGHT, Sun.LIGHT_DAY, absA))
+        sun?.setRotationDeg(a * 180.0)
     }
 
     override fun onEvent(event: Event) {
         if (event is PacketReceivedEvent) {
             when (event.tokens[0]) {
-                "time" -> World.environment.time = event.tokens[1].toDouble()
+                "time" -> time = event.tokens[1].toDouble()
                 "playerInfo" -> {
                     for (token in event.tokens) if (token.startsWith("time")) {
-                        World.environment.time = token.substring(6).toDouble()
+                        time = token.substring(6).toDouble()
                     }
                 }
                 "" -> GameLoop.end()

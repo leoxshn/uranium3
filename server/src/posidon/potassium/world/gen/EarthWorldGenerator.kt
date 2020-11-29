@@ -10,6 +10,7 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.sqrt
+import kotlin.random.Random
 
 class EarthWorldGenerator(seed: Long) : WorldGenerator() {
 
@@ -89,7 +90,7 @@ class EarthWorldGenerator(seed: Long) : WorldGenerator() {
                 val absY = (absChunkY + y).toDouble()
                 if (genVoxel(absX, absY, absZ, height, flatness)) {
                     if (y == Chunk.SIZE - 1) {
-                        chunk[x, y, z] = if (!genVoxel(absX, absY + 1, absZ, height, flatness) && chunk[x, y - 1, z] != null) Block(Material.GRASS) else Block(Material.STONE)
+                        chunk[x, y, z] = if (!genVoxel(absX, absY + 1, absZ, height, flatness) && chunk[x, y - 1, z] != null) Block(Material.DIRT) else Block(Material.STONE)
                     } else {
                         chunk[x, y, z] = Block(Material.STONE)
                     }
@@ -99,9 +100,14 @@ class EarthWorldGenerator(seed: Long) : WorldGenerator() {
                         else -> chunk[x, y - 1, z] != null && chunk[x, y - 2, z] != null
                     }
                     if (shouldBeGrass) {
-                        chunk[x, y - 1, z] = Block(Material.GRASS)
+                        chunk[x, y - 1, z] = Block(Material.DIRT)
                     }
-                }
+                }/* else when (Random.nextInt(48)) {
+                    0 -> chunk[x, y, z] = Block(Material.LIGHT_BRICKS)
+                    1 -> chunk[x, y, z] = Block(Material.MOONSTONE)
+                    2 -> chunk[x, y, z] = Block(Material.MOONSTONE_BRICKS)
+                    3 -> chunk[x, y, z] = Block(Material.WOOD)
+                }*/
             }
         }
         return chunk

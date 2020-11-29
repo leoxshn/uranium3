@@ -8,7 +8,6 @@ import kotlin.math.sin
 interface Environment {
 
     val skyColor: Vec3f
-    val skyLight: Vec3f
     val ambientLight: Vec3f
 
     var sun: Sun?

@@ -7,9 +7,17 @@ import org.lwjgl.system.MemoryStack
 import java.nio.ByteBuffer
 import kotlin.math.min
 
-class Texture(filename: String) {
+class Texture {
 
-    private val id: Int = loadTexture(filename)
+    private val id: Int
+
+    constructor(filename: String) {
+        this.id = loadTexture(filename)
+    }
+
+    internal constructor(id: Int) {
+        this.id = id
+    }
 
     fun destroy() = GL11.glDeleteTextures(id)
 
@@ -32,8 +40,8 @@ class Texture(filename: String) {
         GL11.glPixelStorei(GL11.GL_UNPACK_ALIGNMENT, 1)
         GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA, width, height, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, buf)
         GL30.glGenerateMipmap(GL11.GL_TEXTURE_2D)
-        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR_MIPMAP_NEAREST)
-        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST)
+        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR_MIPMAP_LINEAR)
+        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR_MIPMAP_LINEAR)
         GL11.glTexParameterf(GL11.GL_TEXTURE_2D, GL14.GL_TEXTURE_LOD_BIAS, -1f)
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL14.GL_GENERATE_MIPMAP, GL11.GL_TRUE)
         if (GL.getCapabilities().GL_EXT_texture_filter_anisotropic) {
@@ -48,6 +56,20 @@ class Texture(filename: String) {
 
     override fun toString() = "texture { id: $id, w: $width, h: $height }"
 
+    fun setWrap(wrap: Wrap) {
+        bind(this)
+        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, wrap.value)
+        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, wrap.value)
+    }
+
+    fun setMagFilter(filter: Filter) {
+        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, filter.value)
+    }
+    
+    fun setMinFilter(filter: Filter) {
+        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, filter.value)
+    }
+
     companion object {
         fun bind(vararg textures: Texture?) {
             for (i in textures.indices) {
@@ -56,5 +78,18 @@ class Texture(filename: String) {
             }
             GL13.glActiveTexture(GL13.GL_TEXTURE0)
         }
+    }
+
+    enum class Wrap(internal val value: Int) {
+        REPEAT(GL11.GL_REPEAT),
+        MIRRORED_REPEAT(GL14.GL_MIRRORED_REPEAT),
+        CLAMP_TO_EDGE(GL14.GL_CLAMP_TO_EDGE),
+        CLAMP_TO_BORDER(GL14.GL_CLAMP_TO_BORDER)
+    }
+
+    enum class Filter(internal val value: Int) {
+        NEAREST(GL11.GL_NEAREST),
+        SMOOTHER_NEAREST(GL14.GL_LINEAR_MIPMAP_NEAREST),
+        LINEAR(GL14.GL_LINEAR_MIPMAP_LINEAR)
     }
 }

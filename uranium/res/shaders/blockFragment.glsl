@@ -19,7 +19,7 @@ void main () {
     vec2 realUV = (uv - floor(uv) + atlasUV) / SHEET_SIZE;
 
     out_Color = texture(albedo, realUV);
-    out_Normal = vec4(normal, 1.0);
+    out_Normal = vec4(normal / 2.0 + 0.5, 1.0);
     out_Specular = texture(specular, realUV);
     out_Glow = texture(emission, realUV);
 }

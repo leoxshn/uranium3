@@ -9,7 +9,7 @@ import posidon.uranium.events.WindowResizedEvent
 import posidon.uranium.input.Input
 import posidon.uranium.nodes.Scene
 
-object Window {
+object Window : Renderer.FrameBuffer {
 
     private var id: Long = 0
 
@@ -100,22 +100,25 @@ object Window {
             width = w
             height = h
             GL11.glViewport(0, 0, width, height)
-            FrameBuffer.onWindowResize()
             Scene.passEvent(event)
         }
     }
 
     internal fun update() {
-        GL11.glClearColor(backgroundColor.x, backgroundColor.y, backgroundColor.z, 1.0f)
-        GL11.glClear(GL11.GL_COLOR_BUFFER_BIT or GL11.GL_DEPTH_BUFFER_BIT)
+        clear()
         GLFW.glfwPollEvents()
     }
 
     internal fun swapBuffers() = GLFW.glfwSwapBuffers(id)
 
-    internal fun bindBuffer() {
+    override fun bind() {
         GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0)
         GL11.glViewport(0, 0, width, height)
+    }
+
+    override fun clear() {
+        GL11.glClearColor(backgroundColor.x, backgroundColor.y, backgroundColor.z, 1.0f)
+        GL11.glClear(GL11.GL_COLOR_BUFFER_BIT or GL11.GL_DEPTH_BUFFER_BIT)
     }
 
     internal fun destroy() {

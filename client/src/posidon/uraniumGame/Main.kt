@@ -7,7 +7,6 @@ import posidon.uranium.nodes.spatial.Eye
 import posidon.uranium.net.Client
 import posidon.uranium.gameLoop.EngineImplementation
 import posidon.uranium.gameLoop.GameLoop
-import posidon.uranium.nodes.environment.Sun
 import posidon.uraniumGame.net.packets.JoinPacket
 import posidon.uraniumGame.ui.LoadingScreenScene
 import posidon.uraniumGame.voxel.Block
@@ -43,8 +42,6 @@ fun main(args: Array<String>) = GameLoop.loop(object : EngineImplementation {
                 Renderer.runOnThread {
                     Scene.set(World)
                     loading.destroy()
-                    Renderer.eye!!.destroy()
-                    Renderer.eye = World.player.eye
                 }
             } else Renderer.runOnThread {
                 loading.text.string = "Couldn't connect :("

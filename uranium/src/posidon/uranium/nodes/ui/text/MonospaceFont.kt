@@ -12,12 +12,16 @@ abstract class MonospaceFont(path: String) {
     abstract fun isFlipped(char: Char): Boolean
 
     internal var texture: Texture? = null
+        private set
 
     internal var renderGlyphSize: Vec2f? = null
 
     init {
         Renderer.runOnThread {
-            texture = Texture(path)
+            texture = Texture(path).apply {
+                setMinFilter(Texture.Filter.SMOOTHER_NEAREST)
+                setMagFilter(Texture.Filter.NEAREST)
+            }
             renderGlyphSize = Vec2f(glyphWidth.toFloat() / texture!!.width, glyphHeight.toFloat() / texture!!.height)
         }
     }
