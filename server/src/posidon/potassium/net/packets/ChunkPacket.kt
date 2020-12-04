@@ -9,13 +9,15 @@ class ChunkPacket(private val chunk: Chunk) : Packet("chunk") {
 
     override fun packToString(): String {
         val stringBuilder = StringBuilder()
+        var nullCount = 0
         for (block in chunk) {
-            if (block == null) stringBuilder
-                .append((-1).toChar())
-                .append((-1).toChar())
-                .append((-1).toChar())
-                .append((-1).toChar())
+            if (block == null) nullCount++
             else {
+                if (nullCount != 0) {
+                    stringBuilder.append(
+                        ((-1 ushr 16).toChar().toString() + (-1).toChar()).repeat(nullCount * 2))
+                    nullCount = 0
+                }
                 stringBuilder
                     .append((block.material.ordinal ushr 16).toChar())
                     .append((block.material.ordinal).toChar())

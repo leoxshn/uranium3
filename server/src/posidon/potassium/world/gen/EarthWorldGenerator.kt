@@ -10,7 +10,6 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.sqrt
-import kotlin.random.Random
 
 class EarthWorldGenerator(seed: Long) : WorldGenerator() {
 
@@ -36,7 +35,7 @@ class EarthWorldGenerator(seed: Long) : WorldGenerator() {
         }
 
         val mountainHeight = run {
-            val pointiness = 1.0 + openSimplexNoise.get(absX + 100, absZ + 100, scale = 84)
+            val pointiness = 1.0 + openSimplexNoise.get(absX, absZ, scale = 84, offset = 100)
             val h = openSimplexNoise.get(absX, absZ, scale = 256).pow(pointiness) * pointiness
             val avgHeight = run {
                 val a = openSimplexNoise.get(absX + 56, absZ + 56, scale = 256)
@@ -72,6 +71,15 @@ class EarthWorldGenerator(seed: Long) : WorldGenerator() {
         return blockF > 0.5
     }
 
+    private fun getCave(absX: Double, absY: Double, absZ: Double, height: Double): Boolean {
+        val compression = openSimplexNoise.get(absX, absY, absZ, scale = 48, offset = 32, convertToMin0Max1 = true)
+
+        val emptiness = openSimplexNoise.get(absX, absY, absZ, scale = 42, offset = 436, convertToMin0Max1 = true)
+        val emptinessMini = openSimplexNoise.get(absX, absY, absZ, scale = 8, offset = 325, convertToMin0Max1 = true)
+
+        return ((emptiness + emptinessMini) / 2.0).pow(compression) > .9
+    }
+
     override fun genChunk(chunkPos: Vec3i): Chunk {
         val chunk = Chunk(chunkPos)
         val absChunkX = chunkPos.x * Chunk.SIZE
@@ -88,26 +96,28 @@ class EarthWorldGenerator(seed: Long) : WorldGenerator() {
 
             for (y in 0 until Chunk.SIZE) {
                 val absY = (absChunkY + y).toDouble()
-                if (genVoxel(absX, absY, absZ, height, flatness)) {
-                    if (y == Chunk.SIZE - 1) {
-                        chunk[x, y, z] = if (!genVoxel(absX, absY + 1, absZ, height, flatness) && chunk[x, y - 1, z] != null) Block(Material.DIRT) else Block(Material.STONE)
-                    } else {
-                        chunk[x, y, z] = Block(Material.STONE)
-                    }
-                } else if (y != 0) {
-                    val shouldBeGrass = when (y) {
-                        1 -> chunk[x, y - 1, z] != null && genVoxel(absX, absY - 2, absZ, height, flatness)
-                        else -> chunk[x, y - 1, z] != null && chunk[x, y - 2, z] != null
-                    }
-                    if (shouldBeGrass) {
-                        chunk[x, y - 1, z] = Block(Material.DIRT)
-                    }
-                }/* else when (Random.nextInt(48)) {
-                    0 -> chunk[x, y, z] = Block(Material.LIGHT_BRICKS)
-                    1 -> chunk[x, y, z] = Block(Material.MOONSTONE)
-                    2 -> chunk[x, y, z] = Block(Material.MOONSTONE_BRICKS)
-                    3 -> chunk[x, y, z] = Block(Material.WOOD)
-                }*/
+                if (!getCave(absX, absY, absZ, height)) {
+                    if (genVoxel(absX, absY, absZ, height, flatness)) {
+                        if (y == Chunk.SIZE - 1) {
+                            chunk[x, y, z] = if (!genVoxel(absX, absY + 1, absZ, height, flatness) && chunk[x, y - 1, z] != null) Block(Material.DIRT) else Block(Material.STONE)
+                        } else {
+                            chunk[x, y, z] = Block(Material.STONE)
+                        }
+                    } else if (y != 0) {
+                        val shouldBeGrass = when (y) {
+                            1 -> chunk[x, y - 1, z] != null && genVoxel(absX, absY - 2, absZ, height, flatness)
+                            else -> chunk[x, y - 1, z] != null && chunk[x, y - 2, z] != null
+                        }
+                        if (shouldBeGrass) {
+                            chunk[x, y - 1, z] = Block(Material.DIRT)
+                        }
+                    }/* else when (Random.nextInt(48)) {
+                        0 -> chunk[x, y, z] = Block(Material.LIGHT_BRICKS)
+                        1 -> chunk[x, y, z] = Block(Material.MOONSTONE)
+                        2 -> chunk[x, y, z] = Block(Material.MOONSTONE_BRICKS)
+                        3 -> chunk[x, y, z] = Block(Material.WOOD)
+                    }*/
+                }
             }
         }
         return chunk

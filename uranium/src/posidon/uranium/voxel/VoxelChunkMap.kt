@@ -46,7 +46,7 @@ abstract class VoxelChunkMap<C : VoxelChunk<*>>(name: String) : Node(name), Coll
         preRender(blockShader)
 
         for (chunk in map.values) {
-            if (chunk.willBeRendered /*&& chunk.isInFov(eye)*/) {
+            if (chunk.isVisible /*&& chunk.isInFov(eye)*/) {
                 blockShader["position"] = chunk.absolutePosition.toVec3f()
                 Renderer.render(chunk.mesh!!)
             }

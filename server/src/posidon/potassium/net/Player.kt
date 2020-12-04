@@ -16,6 +16,7 @@ import java.net.SocketException
 import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.collections.ArrayList
 import kotlin.concurrent.thread
+import kotlin.math.roundToInt
 
 class Player(
     private val socket: Socket
@@ -83,15 +84,13 @@ class Player(
 
         thread {
             var lastTime: Long = System.nanoTime()
-            val amountOfTicks = 60.0
-            val ns: Double = 1000000000.0 / amountOfTicks
             var delta = 0.0
 
             while (running) {
                 val now: Long = System.nanoTime()
-                delta += (now - lastTime) / ns
+                delta += (now - lastTime) / 1000000000.0
                 lastTime = now
-                if (delta >= 1) {
+                if (delta >= 0.01) {
                     tick()
                     delta--
                 }
@@ -117,6 +116,22 @@ class Player(
             Console.printProblem(playerName!!, " is sending packets to fast! (${tickEventQueue.size} per tick)")
         }
         tickEventQueue.removeIf { it(); true }
+
+        val w = world
+        if (w != null) {
+            val loadChunks = w.loadDistance / Chunk.SIZE
+            val xx = (position.x / Chunk.SIZE).roundToInt()
+            val yy = (position.y / Chunk.SIZE).roundToInt()
+            val zz = (position.z / Chunk.SIZE).roundToInt()
+            for (x in -loadChunks..loadChunks)
+                for (y in -loadChunks..loadChunks)
+                    for (z in -loadChunks..loadChunks) {
+                        val chunkPos = Vec3i(xx + x, yy + y, zz + z)
+                        if (!sentChunks.contains(chunkPos) && chunkPos.y >= -7 && chunkPos.y <= 7) {
+                            send(w.getChunk(chunkPos))
+                        }
+                    }
+        }
     }
 
     fun disconnect() {

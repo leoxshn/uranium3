@@ -41,7 +41,11 @@ abstract class VoxelChunk<V : Voxel>(
         private const val BOTTOM = 5
     }
 
-    var willBeRendered = false
+    val isVisible get() = isCloseEnough && willBeRendered
+
+    var isCloseEnough = true
+    private var willBeRendered = false
+
     inline val allNeighboringChunksAreLoaded get() = chunkMap[position.copy(x = position.x + 1)] != null &&
         chunkMap[position.copy(x = position.x - 1)] != null &&
         chunkMap[position.copy(y = position.y + 1)] != null &&

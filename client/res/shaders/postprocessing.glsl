@@ -307,7 +307,9 @@ vec3 renderPixel (vec2 uv) {
         vec3 haloColor = vec3(0.57, 0.24, 0.1);
         vec3 sky = mix(skyColor, positiveMix(skyColor, haloColor), pow(mixedSunity, 6 - sunsetity * 4) * pow(sunsetity, 3) / 2.8);
         vec3 halo = pow(sunity, 5 - sunsetity * 4) * sqrt(sunsetity * 4) / 2 * haloColor;
-        vec3 sun = halo + vec3(0.48, 0.36, 0.0) * pow(sunity, 37.0) + vec3(pow(sunity, 51.0));
+
+        vec3 sun = halo;
+        if (depth == 1.0) sun += vec3(0.48, 0.36, 0.0) * pow(sunity, 37.0) + vec3(pow(sunity, 51.0));
 
         color = mix(positiveMix(sky, sun), color, visibility);
     }

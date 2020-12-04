@@ -19,7 +19,7 @@ fun main(args: Array<String>) = GameLoop.loop(object : EngineImplementation {
         val loading = LoadingScreenScene()
         Scene.set(loading)
 
-        Block.Textures.init()
+        Block.init()
 
         Client.onClose = {
             Scene.set(loading.apply {
@@ -36,7 +36,7 @@ fun main(args: Array<String>) = GameLoop.loop(object : EngineImplementation {
                 val defs = tokens[1].split(',')
                 for (def in defs) {
                     val eqI = def.indexOf('=')
-                    ChunkMap.blockDictionary[def.substring(0, eqI).toInt()] = def.substring(eqI + 1)
+                    Block.dictionary[def.substring(0, eqI).toInt()] = def.substring(eqI + 1)
                 }
 
                 Renderer.runOnThread {
@@ -50,7 +50,7 @@ fun main(args: Array<String>) = GameLoop.loop(object : EngineImplementation {
     }
 
     override fun kill() {
-        Block.Textures.destroy()
+        Block.destroy()
         Client.stop()
     }
 })
