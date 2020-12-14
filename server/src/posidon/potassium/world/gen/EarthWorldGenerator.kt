@@ -3,13 +3,9 @@ package posidon.potassium.world.gen
 import posidon.library.types.Vec2i
 import posidon.library.types.Vec3i
 import posidon.potassium.content.Block
-import posidon.potassium.content.Material
 import posidon.potassium.tools.OpenSimplexNoise
 import posidon.potassium.world.Chunk
-import kotlin.math.max
-import kotlin.math.min
-import kotlin.math.pow
-import kotlin.math.sqrt
+import kotlin.math.*
 
 class EarthWorldGenerator(seed: Long) : WorldGenerator() {
 
@@ -72,12 +68,14 @@ class EarthWorldGenerator(seed: Long) : WorldGenerator() {
     }
 
     private fun getCave(absX: Double, absY: Double, absZ: Double, height: Double): Boolean {
-        val compression = openSimplexNoise.get(absX, absY, absZ, scale = 48, offset = 32, convertToMin0Max1 = true)
 
-        val emptiness = openSimplexNoise.get(absX, absY, absZ, scale = 42, offset = 436, convertToMin0Max1 = true)
+        val emptiness = abs(openSimplexNoise.get(absX, absY, absZ, scale = 42, offset = 23))
+        val emptinessBig = sqrt(abs(openSimplexNoise.get(absX, absY, absZ, scale = 70, offset = 436)))
         val emptinessMini = openSimplexNoise.get(absX, absY, absZ, scale = 8, offset = 325, convertToMin0Max1 = true)
 
-        return ((emptiness + emptinessMini) / 2.0).pow(compression) > .9
+        val fullness = 1 + openSimplexNoise.get(absX, absY, absZ, scale = 65, offset = 65, convertToMin0Max1 = true)
+
+        return emptinessBig * ((emptiness + emptinessMini) / fullness) > .8
     }
 
     override fun genChunk(chunkPos: Vec3i): Chunk {
@@ -99,9 +97,9 @@ class EarthWorldGenerator(seed: Long) : WorldGenerator() {
                 if (!getCave(absX, absY, absZ, height)) {
                     if (genVoxel(absX, absY, absZ, height, flatness)) {
                         if (y == Chunk.SIZE - 1) {
-                            chunk[x, y, z] = if (!genVoxel(absX, absY + 1, absZ, height, flatness) && chunk[x, y - 1, z] != null) Block(Material.DIRT) else Block(Material.STONE)
+                            chunk[x, y, z] = if (!genVoxel(absX, absY + 1, absZ, height, flatness) && chunk[x, y - 1, z] != null) Block.DIRT else Block.STONE
                         } else {
-                            chunk[x, y, z] = Block(Material.STONE)
+                            chunk[x, y, z] = Block.STONE
                         }
                     } else if (y != 0) {
                         val shouldBeGrass = when (y) {
@@ -109,13 +107,13 @@ class EarthWorldGenerator(seed: Long) : WorldGenerator() {
                             else -> chunk[x, y - 1, z] != null && chunk[x, y - 2, z] != null
                         }
                         if (shouldBeGrass) {
-                            chunk[x, y - 1, z] = Block(Material.DIRT)
+                            chunk[x, y - 1, z] = Block.DIRT
                         }
                     }/* else when (Random.nextInt(48)) {
-                        0 -> chunk[x, y, z] = Block(Material.LIGHT_BRICKS)
-                        1 -> chunk[x, y, z] = Block(Material.MOONSTONE)
-                        2 -> chunk[x, y, z] = Block(Material.MOONSTONE_BRICKS)
-                        3 -> chunk[x, y, z] = Block(Material.WOOD)
+                        0 -> chunk[x, y, z] = Block.LIGHT_BRICKS
+                        1 -> chunk[x, y, z] = Block.MOONSTONE
+                        2 -> chunk[x, y, z] = Block.MOONSTONE_BRICKS
+                        3 -> chunk[x, y, z] = Block.WOOD
                     }*/
                 }
             }

@@ -13,38 +13,23 @@ import kotlin.math.sqrt
 
 abstract class VoxelChunk<V : Voxel>(
     val position: Vec3i,
-    val chunkMap: VoxelChunkMap<*>
+    val chunkMap: VoxelChunkMap<V, *>
 ) {
 
-    inline val size get() = chunkMap.chunkSize
     val blocks = arrayOfNulls<Voxel>(size * size * size)
-
-    operator fun get(pos: Vec3i): V? = blocks[pos.x * size * size + pos.y * size + pos.z] as V?
-    operator fun get(x: Int, y: Int, z: Int): V? = blocks[x * size * size + y * size + z] as V?
-    operator fun set(pos: Vec3i, voxel: V?) { blocks[pos.x * size * size + pos.y * size + pos.z] = voxel }
-
-    inline val absolutePosition get() = position * size
-
-    fun destroy() {
-        willBeRendered = false
-        Renderer.runOnThread {
-            mesh?.destroy()
-        }
-    }
-
-    companion object {
-        private const val SOUTH = 0
-        private const val NORTH = 1
-        private const val EAST = 2
-        private const val WEST = 3
-        private const val TOP = 4
-        private const val BOTTOM = 5
-    }
-
-    val isVisible get() = isCloseEnough && willBeRendered
 
     var isCloseEnough = true
     private var willBeRendered = false
+
+    var mesh: Mesh? = null
+        private set
+
+
+    val isVisible get() = isCloseEnough && willBeRendered
+
+    inline val size get() = chunkMap.chunkSize
+
+    inline val absolutePosition get() = position * size
 
     inline val allNeighboringChunksAreLoaded get() = chunkMap[position.copy(x = position.x + 1)] != null &&
         chunkMap[position.copy(x = position.x - 1)] != null &&
@@ -53,11 +38,10 @@ abstract class VoxelChunk<V : Voxel>(
         chunkMap[position.copy(z = position.z + 1)] != null &&
         chunkMap[position.copy(z = position.z - 1)] != null
 
-    var mesh: Mesh? = null
-        private set
 
-    /*var isFull = false
-        private set*/
+    operator fun get(pos: Vec3i): V? = blocks[pos.x * size * size + pos.y * size + pos.z] as V?
+    operator fun get(x: Int, y: Int, z: Int): V? = blocks[x * size * size + y * size + z] as V?
+    operator fun set(pos: Vec3i, voxel: V?) { blocks[pos.x * size * size + pos.y * size + pos.z] = voxel }
 
     fun isInFov(eye: Eye) : Boolean {
         val posRelToEye = absolutePosition - eye.position.toVec3i()
@@ -82,8 +66,6 @@ abstract class VoxelChunk<V : Voxel>(
             var side = 0
             fun equals(face: VoxelFace?) = face!!.transparent == transparent && face.voxel.id == voxel.id
         }
-
-        //println("chunk received")
 
         fun getVoxelFace(x: Int, y: Int, z: Int, side: Int): VoxelFace? {
             val chunk = when {
@@ -321,5 +303,21 @@ abstract class VoxelChunk<V : Voxel>(
         normals.clear()
 
         onEnd()
+    }
+
+    fun destroy() {
+        willBeRendered = false
+        Renderer.runOnThread {
+            mesh?.destroy()
+        }
+    }
+
+    companion object {
+        private const val SOUTH = 0
+        private const val NORTH = 1
+        private const val EAST = 2
+        private const val WEST = 3
+        private const val TOP = 4
+        private const val BOTTOM = 5
     }
 }

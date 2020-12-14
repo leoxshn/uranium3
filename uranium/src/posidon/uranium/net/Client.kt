@@ -13,7 +13,7 @@ object Client {
     private lateinit var socket: Socket
     private lateinit var output: OutputStream
     private lateinit var input: InputStream
-    private lateinit var writer: OutputStreamWriter
+    private lateinit var writer: Writer
 
     var onClose = {}
 
@@ -22,7 +22,7 @@ object Client {
             socket = Socket(ip, port)
             output = socket.getOutputStream()
             input = socket.getInputStream()
-            writer = OutputStreamWriter(output, Charsets.UTF_8)
+            writer = OutputStreamWriter(output, Charsets.UTF_8).buffered()
 
             onEnd(true)
 

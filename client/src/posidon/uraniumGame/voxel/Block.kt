@@ -6,7 +6,10 @@ import posidon.uranium.graphics.Texture
 import posidon.uranium.voxel.Voxel
 import java.util.HashMap
 
-class Block private constructor(id: String, private val uv: Vec2f) : Voxel(id) {
+class Block private constructor(
+    id: String,
+    private val uv: Vec2f
+) : Voxel(id) {
 
     override fun getUV() = uv
 

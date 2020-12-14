@@ -14,17 +14,14 @@ class ChunkPacket(private val chunk: Chunk) : Packet("chunk") {
             if (block == null) nullCount++
             else {
                 if (nullCount != 0) {
-                    stringBuilder.append(
-                        ((-1 ushr 16).toChar().toString() + (-1).toChar()).repeat(nullCount * 2))
+                    stringBuilder.append(((-1 ushr 16).toChar().toString() + (-1).toChar()).repeat(nullCount))
                     nullCount = 0
                 }
                 stringBuilder
-                    .append((block.material.ordinal ushr 16).toChar())
-                    .append((block.material.ordinal).toChar())
-                    .append((block.shape.ordinal ushr 16).toChar())
-                    .append(block.shape.ordinal.toByte().toChar())
+                    .append((block.ordinal ushr 16).toChar())
+                    .append((block.ordinal).toChar())
             }
         }
-        return ("coords:" + chunk.position.x + ',' + chunk.position.y + ',' + chunk.position.z + '&' + Compressor.compressString(stringBuilder.toString(), Chunk.CUBE_SIZE * 8).newLineEscape())
+        return (chunk.position.x.toString() + ',' + chunk.position.y + ',' + chunk.position.z + '&' + Compressor.compressString(stringBuilder.toString(), Chunk.CUBE_SIZE * 4).newLineEscape())
     }
 }

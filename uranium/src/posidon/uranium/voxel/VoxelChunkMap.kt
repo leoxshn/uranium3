@@ -13,7 +13,7 @@ import posidon.uranium.nodes.spatial.Eye
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.floor
 
-abstract class VoxelChunkMap<C : VoxelChunk<*>>(name: String) : Node(name), Collider {
+abstract class VoxelChunkMap<V : Voxel, C : VoxelChunk<V>>(name: String) : Node(name), Collider {
 
     abstract val chunkSize: Int
 
@@ -61,14 +61,23 @@ abstract class VoxelChunkMap<C : VoxelChunk<*>>(name: String) : Node(name), Coll
         }
     }
 
-    fun getBlock(position: Vec3f) = getBlock(floor(position.x).toInt(), floor(position.y).toInt(), floor(position.z).toInt())
     fun getBlock(position: Vec3i) = getBlock(position.x, position.y, position.z)
-    fun getBlock(x: Int, y: Int, z: Int): Voxel? {
+    fun getBlock(x: Int, y: Int, z: Int): V? {
         val smallX = if (x % chunkSize < 0) chunkSize + x % chunkSize else x % chunkSize
         val smallY = if (y % chunkSize < 0) chunkSize + y % chunkSize else y % chunkSize
         val smallZ = if (z % chunkSize < 0) chunkSize + z % chunkSize else z % chunkSize
         val chunkPos = Vec3i(floor(x.toFloat() / chunkSize).toInt(), floor(y.toFloat() / chunkSize).toInt(), floor(z.toFloat() / chunkSize).toInt())
         return this[chunkPos]?.get(smallX, smallY, smallZ)
+    }
+    fun setBlock(position: Vec3i, voxel: V?) = setBlock(position.x, position.y, position.z, voxel)
+    fun setBlock(x: Int, y: Int, z: Int, voxel: V?): C? {
+        val smallX = if (x % chunkSize < 0) chunkSize + x % chunkSize else x % chunkSize
+        val smallY = if (y % chunkSize < 0) chunkSize + y % chunkSize else y % chunkSize
+        val smallZ = if (z % chunkSize < 0) chunkSize + z % chunkSize else z % chunkSize
+        val chunkPos = Vec3i(floor(x.toFloat() / chunkSize).toInt(), floor(y.toFloat() / chunkSize).toInt(), floor(z.toFloat() / chunkSize).toInt())
+        return this[chunkPos]?.apply {
+            set(Vec3i(smallX, smallY, smallZ), voxel)
+        }
     }
 
     override fun collide(point: Vec3f): Boolean {

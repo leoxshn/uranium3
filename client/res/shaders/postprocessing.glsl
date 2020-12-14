@@ -141,7 +141,7 @@ float nearestLevel (float col, int mode) {
     if (mode == 1) levCount = SatLevCount;
     if (mode == 2) levCount = ValLevCount;
 
-    for (int i = 0; i < levCount-1; i++ ) {
+    for (int i = 0; i < levCount - 1; i++) {
         if (mode == 0) {
             if (col >= HueLevels[i] && col <= HueLevels[i+1]) {
                 return HueLevels[i+1];
@@ -161,8 +161,8 @@ float nearestLevel (float col, int mode) {
 }
 
 float isEdge (vec2 coords) {
-    float dxtex = 1.0 / float(textureSize(depth_buffer,0).x);
-    float dytex = 1.0 / float(textureSize(depth_buffer,0).y);
+    float dxtex = 1.0 / float(textureSize(depth_buffer, 0).x);
+    float dytex = 1.0 / float(textureSize(depth_buffer, 0).y);
     float pix[9];
     int k = -1;
     float delta;
@@ -177,47 +177,13 @@ float isEdge (vec2 coords) {
 
     // average color differences around neighboring pixels
     delta = (
-        abs(pix[1]-pix[7]) +
-        abs(pix[5]-pix[3]) +
-        abs(pix[0]-pix[8]) +
-        abs(pix[2]-pix[6])
+        abs(pix[1] - pix[7]) +
+        abs(pix[5] - pix[3]) +
+        abs(pix[0] - pix[8]) +
+        abs(pix[2] - pix[6])
     ) / 4.0;
 
-    //return clamp(5.5*delta,0.0,1.0);
-    return clamp(edge_thres2*delta,0.0,1.0);
-}
-
-vec3 toonify (vec3 color) {
-    vec3 tmp = vec3(min(color.x, 1.0), min(color.y, 1.0), min(color.z, 1.0));
-    vec3 vHSV = RGBtoHSV(tmp.r, tmp.g, tmp.b);
-    vHSV.x = nearestLevel(vHSV.x, 0);
-    vHSV.y = nearestLevel(vHSV.y, 1);
-    vHSV.z = nearestLevel(vHSV.z, 2);
-    float edg = isEdge(uv);
-    if (edg >= edge_thres) {
-        vHSV.y *= 2.0;
-        vHSV.z = pow(vHSV.z, 1.8);
-    }
-    vec3 c = HSVtoRGB(vHSV.x,vHSV.y,vHSV.z);
-    return c;
-}
-
-vec3 bloom () {
-    int radius = 4;
-    vec4 c = texture(glow_buffer, uv);
-    vec2 res = textureSize(glow_buffer, 0);
-    float aspectRatio = res.y / res.x;
-    int i = 1;
-    for (int x = 1; x < radius; x++) {
-        for (int y = 1; y < radius; y++) {
-            c += texture(glow_buffer, uv + vec2(x * aspectRatio, y) / 480);
-            c += texture(glow_buffer, uv + vec2(-x * aspectRatio, y) / 480);
-            c += texture(glow_buffer, uv + vec2(x * aspectRatio, -y) / 480);
-            c += texture(glow_buffer, uv + vec2(-x * aspectRatio, -y) / 480);
-            i += 4;
-        }
-    }
-    return c.rgb / i;
+    return clamp(edge_thres2 * delta, 0.0, 1.0);
 }
 
 float doAmbientOcclusion (vec2 tcoord, vec2 uv, vec3 p, vec3 cnorm) {
@@ -235,12 +201,12 @@ float ambientOcclusion(vec2 uv) {
     vec2 rnd = normalize(vec2(rand(p.xy), rand(n.xy)));
 
     float ao = 0.0f;
-    float rad = 1.0/p.z;
+    float rad = 1.0 / p.z;
     vec2 vec[4];
-    vec[0] = vec2(1.0,0.0);
-    vec[1] = vec2(-1.0,0.0);
-    vec[2] = vec2(0.0,1.0);
-    vec[3] = vec2(0.0,-1.0);
+    vec[0] = vec2(1.0, 0.0);
+    vec[1] = vec2(-1.0, 0.0);
+    vec[2] = vec2(0.0, 1.0);
+    vec[3] = vec2(0.0, -1.0);
 
     int iterations = 4;
     for (int j = 0; j < iterations; ++j) {
@@ -255,17 +221,6 @@ float ambientOcclusion(vec2 uv) {
     return 1.0 - ao;
 }
 
-float blurredAO() {
-    vec2 res = textureSize(glow_buffer, 0);
-    float aspectRatio = res.y / res.x;
-    float c = ambientOcclusion(uv);
-    c += ambientOcclusion(uv + vec2(aspectRatio, 1.0) / res.y);
-    c += ambientOcclusion(uv + vec2(-aspectRatio, 1.0) / res.y);
-    c += ambientOcclusion(uv + vec2(aspectRatio, -1.0) / res.y);
-    c += ambientOcclusion(uv + vec2(-aspectRatio, -1.0) / res.y);
-    return c / 5;
-}
-
 vec3 renderPixel (vec2 uv) {
     vec3 color = vec3(0.0);
     vec3 albedo = texture(color_buffer, uv).rgb;
@@ -276,8 +231,6 @@ vec3 renderPixel (vec2 uv) {
     color = texture(color_buffer, uv).rgb;
 
     vec3 v = getView(uv);
-    //vec4 world = view * inverse(projection) * vec4(ndc, 1.0);
-    //vec3 world_position = world.xyz / world.w;
 
     if (length(normal) != 0) {
         /// LIGHTING
@@ -287,11 +240,49 @@ vec3 renderPixel (vec2 uv) {
         color = color * positiveMix(ambientLight, directionalLight) + specularLight;
     }
 
-    color = toonify(color);
+    float edge = isEdge(uv);
 
-    color *= blurredAO();
+    { // Toonify
+        vec3 tmp = vec3(min(color.x, 1.0), min(color.y, 1.0), min(color.z, 1.0));
+        vec3 vHSV = RGBtoHSV(tmp.r, tmp.g, tmp.b);
+        vHSV.x = nearestLevel(vHSV.x, 0);
+        vHSV.y = nearestLevel(vHSV.y, 1);
+        vHSV.z = nearestLevel(vHSV.z, 2);
+        if (edge >= edge_thres) {
+            vHSV.y *= 2.0;
+            vHSV.z = pow(vHSV.z, 1.8);
+        }
+        color = HSVtoRGB(vHSV.x, vHSV.y, vHSV.z);
+    }
 
-    color += bloom() * .8;
+    { // AO (blurred)
+        vec2 res = textureSize(glow_buffer, 0);
+        float aspectRatio = res.y / res.x;
+        float c = ambientOcclusion(uv);
+        c += ambientOcclusion(uv + vec2(aspectRatio, 1.0) / res.y);
+        c += ambientOcclusion(uv + vec2(-aspectRatio, 1.0) / res.y);
+        c += ambientOcclusion(uv + vec2(aspectRatio, -1.0) / res.y);
+        c += ambientOcclusion(uv + vec2(-aspectRatio, -1.0) / res.y);
+        color *= c / 5;
+    }
+
+    { // Bloom
+        int radius = 4;
+        vec4 c = texture(glow_buffer, uv);
+        vec2 res = textureSize(glow_buffer, 0);
+        float aspectRatio = res.y / res.x;
+        int i = 1;
+        for (int x = 1; x < radius; x++) {
+            for (int y = 1; y < radius; y++) {
+                c += texture(glow_buffer, uv + vec2(x * aspectRatio, y) / 480);
+                c += texture(glow_buffer, uv + vec2(-x * aspectRatio, y) / 480);
+                c += texture(glow_buffer, uv + vec2(x * aspectRatio, -y) / 480);
+                c += texture(glow_buffer, uv + vec2(-x * aspectRatio, -y) / 480);
+                i += 4;
+            }
+        }
+        color += c.rgb / i * .8;
+    }
 
     if (depth != 0.0) {
         /// FOG
@@ -312,7 +303,10 @@ vec3 renderPixel (vec2 uv) {
         if (depth == 1.0) sun += vec3(0.48, 0.36, 0.0) * pow(sunity, 37.0) + vec3(pow(sunity, 51.0));
 
         color = mix(positiveMix(sky, sun), color, visibility);
+
+        color = mix(color, color * sky, clamp(edge * 72, 0.0, 1.0) * (1 - visibility));
     }
+
     return color;
 }
 

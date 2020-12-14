@@ -15,11 +15,6 @@ class Mesh(
     vararg vbos: VBO
 ) {
 
-    class VBO (
-        val floats: FloatArray,
-        val size: Int
-    )
-
     var vaoId = 0
     var vertexCount = 0
 
@@ -61,6 +56,11 @@ class Mesh(
         }
     }
 
+    internal fun bind() {
+        GL30.glBindVertexArray(vaoId)
+        GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, vboIdList[0])
+    }
+
     fun destroy() {
         bind()
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0)
@@ -71,11 +71,6 @@ class Mesh(
         }
         GL30.glBindVertexArray(0)
         GL30.glDeleteVertexArrays(vaoId)
-    }
-
-    internal fun bind() {
-        GL30.glBindVertexArray(vaoId)
-        GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, vboIdList[0])
     }
 
     companion object {
@@ -99,4 +94,9 @@ class Mesh(
             QUAD.destroy()
         }
     }
+
+    class VBO (
+        val floats: FloatArray,
+        val size: Int
+    )
 }

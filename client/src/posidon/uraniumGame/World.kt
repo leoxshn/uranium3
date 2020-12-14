@@ -33,9 +33,11 @@ object World : Scene("World", WorldEnvironment()) {
         size.set(View.WRAP_CONTENT, Font.SIZE)
     }
 
+    val chunkMap = ChunkMap("chunks")
+
     init {
         add(player)
-        add(ChunkMap("chunks"))
+        add(chunkMap)
         add(Filter("filter", "/shaders/postprocessing.glsl", 4))
         add(speedEffect)
         add(CrossHair("crosshair").apply {

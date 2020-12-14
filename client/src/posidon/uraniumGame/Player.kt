@@ -2,6 +2,7 @@ package posidon.uraniumGame
 
 import posidon.library.types.Vec2f
 import posidon.library.types.Vec3f
+import posidon.library.types.Vec3i
 import posidon.uranium.graphics.Window
 import posidon.uranium.input.Button
 import posidon.uranium.events.PacketReceivedEvent
@@ -15,9 +16,11 @@ import posidon.uranium.input.Key
 import posidon.uranium.events.KeyPressedEvent
 import posidon.uranium.events.MouseButtonPressedEvent
 import posidon.uranium.graphics.Filter
-import posidon.uranium.nodes.Scene
 import posidon.uranium.nodes.spatial.BoundingBox
 import posidon.uranium.nodes.spatial.Spatial
+import posidon.uraniumGame.net.packets.BlockBreakPacket
+import posidon.uraniumGame.voxel.Block
+import posidon.uraniumGame.voxel.ChunkMap
 import kotlin.math.*
 
 class Player(
@@ -30,14 +33,14 @@ class Player(
     val sprintFov = 95f
     val zoomFov = 24f
 
-    var flySpeed = 24f
+    var flySpeed = 18f
 
-    var moveSpeed = 8f
-    var jumpForce = 24f
+    var moveSpeed = 5f
+    var jumpForce = 22f
     var sensitivity = 0.35f
     var gravity = false
 
-    var sprintMultiplier = 2.4f
+    var sprintMultiplier = 1.8f
 
 
     val eye = Eye("eye").apply {
@@ -211,9 +214,56 @@ class Player(
                 }
             }
             is MouseButtonPressedEvent -> {
-                if (event.button == Button.MOUSE_LEFT) Window.mouseLocked = true
+                if (event.button == Button.MOUSE_LEFT && event.action == Input.PRESS) {
+                    if (!Window.mouseLocked) Window.mouseLocked = true
+                    else {
+                        selectBlock(world.chunkMap, 7)?.let {
+                            Client.send(BlockBreakPacket(it))
+                        }
+                    }
+                }
             }
         }
+    }
+
+    fun getDirection(): Vec3f {
+
+        var x = 0.0
+        var y = 0.0
+        var z = -1.0
+
+        val radx = Math.toRadians(eye.rotation.x.toDouble())
+        val rady = Math.toRadians(eye.rotation.y.toDouble())
+
+        //Rotate X
+        //Ignore X ###############################################
+        val newY: Double = y * cos(radx) - z * sin(radx)
+        z = y * sin(radx) + z * cos(radx)
+        y = newY
+
+        //Rotate Y
+        val newX = x * cos(rady) + z * sin(rady)
+        //Ignore Y ###############################################
+        z = x * -sin(rady) + z * cos(rady)
+        x = newX
+
+        return Vec3f(x.toFloat(), y.toFloat(), z.toFloat())
+    }
+
+    fun selectBlock(chunkMap: ChunkMap, maxDistance: Int): Vec3i? {
+        val stepSize = .01f
+        var i = 0
+        val step = getDirection() * stepSize
+        val p = eye.globalTransform.position.copy()
+        while (i * stepSize < maxDistance) {
+            val pos = p.floorToVec3i()
+            chunkMap.getBlock(pos)?.let {
+                return pos
+            }
+            p.selfAdd(step)
+            i++
+        }
+        return null
     }
 
     companion object {

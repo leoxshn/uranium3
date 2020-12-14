@@ -34,7 +34,7 @@ object Input {
 
     internal fun onMouseButtonPress(window: Long, btn: Int, action: Int, mods: Int) {
         mouseButtons[btn] = action != GLFW.GLFW_RELEASE
-        Scene.passEvent(MouseButtonPressedEvent(System.currentTimeMillis(), btn, action))
+        Scene.passEvent(MouseButtonPressedEvent(System.currentTimeMillis(), btn, action, Vec2f(curX.toFloat(), curY.toFloat())))
     }
 
     internal fun onScroll(window: Long, x: Double, y: Double) {
