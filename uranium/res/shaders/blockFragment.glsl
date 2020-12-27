@@ -1,4 +1,3 @@
-#version 420 core
 
 in vec2 atlasUV;
 in vec2 uv;

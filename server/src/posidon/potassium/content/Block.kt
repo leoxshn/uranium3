@@ -6,5 +6,5 @@ enum class Block(val id: String) {
     MOONSTONE("moonstone"),
     MOONSTONE_BRICKS("moonstone_bricks"),
     STONE("stone"),
-    WOOD("wood")
+    WOOD("wood");
 }

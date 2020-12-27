@@ -1,5 +1,7 @@
 package posidon.potassium.world
 
+import kotlin.concurrent.thread
+
 object Worlds {
 
     private val worlds = HashMap<String, World>()
@@ -8,6 +10,6 @@ object Worlds {
 
     fun start(world: World) {
         worlds[world.name] = world
-        Thread(world).start()
+        thread(block = world::run)
     }
 }

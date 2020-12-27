@@ -1,12 +1,10 @@
 package posidon.uranium.nodes
 
-import posidon.uranium.graphics.Renderer
 import posidon.uranium.events.Event
+import posidon.uranium.graphics.Renderer
 import posidon.uranium.nodes.spatial.Eye
 
-abstract class Node(
-    val name: String
-) {
+abstract class Node {
 
     var parent: Node? = null
         private set
@@ -16,9 +14,6 @@ abstract class Node(
      * @throws Exception if there's another child with the same name
      */
     fun add(node: Node) {
-        if (children.find { it.name == node.name } != null) {
-            throw Exception("A node with the name \"${node.name}\" already exists in \"$name\"")
-        }
         children.add(node)
         node.parent = this
     }
@@ -37,13 +32,6 @@ abstract class Node(
     fun removeAllChildren() {
         for (child in children) child.parent = null
         children.clear()
-    }
-
-    operator fun get(path: String): Node? {
-        val p = path.split('/')
-        return children.find { it.name == p[0] }?.let {
-            if (p.size == 1) it else it[path.substringAfter('/')]
-        }
     }
 
     fun passEvent(event: Event) {

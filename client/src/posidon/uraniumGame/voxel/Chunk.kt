@@ -6,9 +6,4 @@ import posidon.uranium.voxel.VoxelChunk
 class Chunk(
     position: Vec3i,
     chunkMap: ChunkMap
-) : VoxelChunk<Block>(position, chunkMap) {
-
-    companion object {
-        const val SIZE = 64
-    }
-}
+) : VoxelChunk<Block>(position, chunkMap)

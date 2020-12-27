@@ -2,7 +2,7 @@ package posidon.uranium.nodes.ui
 
 import org.lwjgl.opengl.GL11
 
-class CrossHair(name: String) : View(name) {
+class CrossHair : View() {
 
     init {
         transform.keepAspectRatio = true

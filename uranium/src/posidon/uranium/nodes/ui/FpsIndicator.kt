@@ -4,13 +4,13 @@ import posidon.uranium.nodes.FpsCounter
 import posidon.uranium.nodes.ui.text.MonospaceFont
 import posidon.uranium.nodes.ui.text.TextLine
 
-class FpsIndicator(name: String, font: MonospaceFont) : View(name) {
+class FpsIndicator(font: MonospaceFont) : View() {
 
-    private val text = TextLine("text", font).apply {
+    private val text = TextLine(font).apply {
         size.y = MATCH_PARENT
         size.x = WRAP_CONTENT
     }
-    private val counter = FpsCounter("counter")
+    private val counter = FpsCounter()
 
     val color by text::color
     var font by text::font

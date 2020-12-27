@@ -1,15 +1,13 @@
 package posidon.uranium.nodes.spatial
 
-import posidon.uranium.graphics.Matrix4f
 import posidon.library.types.Vec2f
 import posidon.uranium.events.Event
 import posidon.uranium.events.WindowResizedEvent
+import posidon.uranium.graphics.Matrix4f
 import posidon.uranium.graphics.Renderer
 import posidon.uranium.graphics.Window
 
-open class Eye(
-    name: String
-) : Spatial(name) {
+open class Eye : Spatial() {
 
     var fov: Float = 70f
         set(value) {

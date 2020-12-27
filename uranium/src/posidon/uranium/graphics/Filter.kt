@@ -1,8 +1,6 @@
 package posidon.uranium.graphics
 
 import org.lwjgl.opengl.*
-import org.lwjgl.opengl.GL20
-import posidon.library.types.Vec3f
 import posidon.uranium.events.Event
 import posidon.uranium.events.WindowResizedEvent
 import posidon.uranium.nodes.Node
@@ -10,7 +8,7 @@ import posidon.uranium.nodes.Scene
 import posidon.uranium.nodes.spatial.Eye
 import java.nio.ByteBuffer
 
-class Filter(name: String, fragmentPath: String, colorBufferCount: Int) : Node(name), Renderer.FrameBuffer {
+class Filter(fragmentPath: String, colorBufferCount: Int, val preRender: (shader: Shader, eye: Eye) -> Unit) : Node(), Renderer.FrameBuffer {
 
     private abstract class Buffer {
         abstract val texture: Texture?
@@ -129,13 +127,7 @@ class Filter(name: String, fragmentPath: String, colorBufferCount: Int) : Node(n
         val currentFilter = Scene.nextBuffer(this)
 
         shader.bind()
-        shader["ambientLight"] = Scene.environment.ambientLight
-        shader["skyColor"] = Scene.environment.skyColor
-        shader["sunLight"] = Scene.environment.sun?.light ?: Vec3f.ZERO
-        shader["sunNormal"] = Scene.environment.sun?.normal ?: Vec3f.ZERO
-        shader["view"] = eye.viewMatrix
-        shader["rotation"] = eye.rotationMatrix
-        shader["projection"] = Renderer.projectionMatrix
+        preRender(shader, eye)
 
         Texture.bind(*attachments.map { it.texture }.toTypedArray())
 

@@ -8,7 +8,6 @@ import org.lwjgl.system.MemoryUtil
 import posidon.uranium.nodes.ui.View
 import java.nio.FloatBuffer
 import java.nio.IntBuffer
-import java.util.ArrayList
 
 class Mesh(
     indices: IntArray,
@@ -82,12 +81,12 @@ class Mesh(
         lateinit var QUAD: Mesh private set
 
         fun init() {
-            QUAD = Mesh(intArrayOf(0, 1, 3, 3, 1, 2), VBO(floatArrayOf(
+            QUAD = Mesh(intArrayOf(0, 1, 3, 3, 1, 2), VBO(size = 2,
                 -1f, 1f,
                 -1f, -1f,
                 1f, -1f,
                 1f, 1f
-            ), 2))
+            ))
         }
 
         fun destroy() {
@@ -96,7 +95,7 @@ class Mesh(
     }
 
     class VBO (
-        val floats: FloatArray,
-        val size: Int
+        val size: Int,
+        vararg val floats: Float
     )
 }

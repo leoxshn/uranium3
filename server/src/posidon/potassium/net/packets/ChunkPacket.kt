@@ -1,11 +1,14 @@
 package posidon.potassium.net.packets
 
+import posidon.library.types.Vec3i
 import posidon.library.util.Compressor
 import posidon.library.util.newLineEscape
 import posidon.potassium.world.Chunk
-import java.lang.StringBuilder
 
-class ChunkPacket(private val chunk: Chunk) : Packet("chunk") {
+class ChunkPacket(
+    private val chunk: Chunk,
+    private val chunkPos: Vec3i
+) : Packet("chunk") {
 
     override fun packToString(): String {
         val stringBuilder = StringBuilder()
@@ -22,6 +25,6 @@ class ChunkPacket(private val chunk: Chunk) : Packet("chunk") {
                     .append((block.ordinal).toChar())
             }
         }
-        return (chunk.position.x.toString() + ',' + chunk.position.y + ',' + chunk.position.z + '&' + Compressor.compressString(stringBuilder.toString(), Chunk.CUBE_SIZE * 4).newLineEscape())
+        return (chunkPos.x.toString() + '&' + chunkPos.y + '&' + chunkPos.z + '&' + Compressor.compressString(stringBuilder.toString(), Chunk.CUBE_SIZE * 4).newLineEscape())
     }
 }

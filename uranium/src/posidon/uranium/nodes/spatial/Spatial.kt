@@ -3,11 +3,8 @@ package posidon.uranium.nodes.spatial
 import posidon.library.types.Vec3f
 import posidon.uranium.nodes.Node
 import posidon.uranium.nodes.Scene
-import posidon.uranium.voxel.VoxelChunkMap
 
-open class Spatial(
-    name: String
-) : Node(name) {
+open class Spatial : Node() {
 
     val transform = Transform()
 

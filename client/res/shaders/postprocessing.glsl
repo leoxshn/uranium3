@@ -1,5 +1,3 @@
-#version 420 core
-
 in vec2 uv;
 
 layout (binding = 0) uniform sampler2D color_buffer;
@@ -21,9 +19,9 @@ uniform mat4 projection;
 
 out vec4 color;
 
-const float FOG_DENSITY = 0.01;
-const float FOG_GRADIENT = 2;
-const float FOG_START = 48;
+const float FOG_DENSITY = 0.005;
+const float FOG_GRADIENT = 3.6;
+const float FOG_START = 96;
 
 const float edge_thres = 0.012;
 const float edge_thres2 = 5.5;
@@ -35,105 +33,7 @@ const float[HueLevCount] HueLevels = float[] (0,20,30,45,60,90,120,140,180,210,2
 const float[SatLevCount] SatLevels = float[] (0,.01,.02,.03,.07,.1,.15,.2,.24,.38,.45,.5,.55,.6,.65,.7,.75,.8,.85,.9,.95,.98,1);
 const float[ValLevCount] ValLevels = float[] (0,.01,.02,.03,.07,.09,.12,.18,.22,.26,.3,.35,.4,.45,.5,.55,.6,.65,.7,.75,.8,.85,.9,.95,1);
 
-
-float rand (vec2 co) { return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453); }
 vec3 positiveMix (vec3 a, vec3 b) { return vec3(max(a.x, b.x), max(a.y, b.y), max(a.z, b.z)); }
-
-vec3 getView (vec2 uv) {
-    float depth = texture(depth_buffer, uv).x;
-    vec3 ndc = vec3(uv * 2.0 - 1.0, depth);
-    vec4 v = inverse(rotation) * inverse(projection) * vec4(ndc, 1.0);
-    v.xyz /= -v.w;
-    return v.xyz;
-}
-
-vec3 RGBtoHSV (float r, float g, float b) {
-    float minv, maxv, delta;
-    vec3 res;
-
-    minv = min(min(r, g), b);
-    maxv = max(max(r, g), b);
-    res.z = maxv;            // v
-
-    delta = maxv - minv;
-
-    if (maxv != 0.0)
-        res.y = delta / maxv;      // s
-    else {
-        // r = g = b = 0      // s = 0, v is undefined
-        res.y = 0.0;
-        res.x = -1.0;
-        return res;
-    }
-
-    if (r == maxv)
-        res.x = (g - b) / delta;      // between yellow & magenta
-    else if (g == maxv)
-        res.x = 2.0 + (b - r) / delta;   // between cyan & yellow
-    else
-        res.x = 4.0 + (r - g) / delta;   // between magenta & cyan
-
-    res.x = res.x * 60.0;            // degrees
-    if (res.x < 0.0)
-        res.x = res.x + 360.0;
-
-    return res;
-}
-
-vec3 HSVtoRGB (float h, float s, float v) {
-    int i;
-    float f, p, q, t;
-    vec3 res;
-
-    if (s == 0.0) {
-        // achromatic (grey)
-        res.x = v;
-        res.y = v;
-        res.z = v;
-        return res;
-    }
-
-    h /= 60.0;         // sector 0 to 5
-    i = int(floor(h));
-    f = h - float(i);         // factorial part of h
-    p = v * (1.0 - s);
-    q = v * (1.0 - s * f);
-    t = v * (1.0 - s * (1.0 - f));
-
-    switch (i) {
-        case 0:
-            res.x = v;
-            res.y = t;
-            res.z = p;
-            break;
-        case 1:
-            res.x = q;
-            res.y = v;
-            res.z = p;
-            break;
-        case 2:
-            res.x = p;
-            res.y = v;
-            res.z = t;
-            break;
-        case 3:
-            res.x = p;
-            res.y = q;
-            res.z = v;
-            break;
-        case 4:
-            res.x = t;
-            res.y = p;
-            res.z = v;
-            break;
-        default: // case 5:
-            res.x = v;
-            res.y = p;
-            res.z = q;
-            break;
-    }
-    return res;
-}
 
 float nearestLevel (float col, int mode) {
     int levCount;
@@ -188,17 +88,18 @@ float isEdge (vec2 coords) {
 
 float doAmbientOcclusion (vec2 tcoord, vec2 uv, vec3 p, vec3 cnorm) {
     float scale = 0.5, bias = 0.1, intensity = 2.0;
-    vec3 diff = -getView(tcoord + uv) - p;
+    vec3 diff = -getView(tcoord + uv, texture(depth_buffer, tcoord + uv).x, inverse(rotation), inverse(projection)) - p;
     vec3 v = normalize(diff);
     float d = length(diff) * scale;
     return max(0.0, dot(cnorm, v) - bias) * (1.0 / (1.0 + d)) * intensity;
 }
 
 float ambientOcclusion(vec2 uv) {
-    if (texture(depth_buffer, uv).x == 1.0) return 1.0;
-    vec3 p = -getView(uv);
+    float depth = texture(depth_buffer, uv).x;
+    if (depth == 1.0) return 1.0;
+    vec3 p = -getView(uv, depth, inverse(rotation), inverse(projection));
     vec3 n = texture(normal_buffer, uv).xyz;
-    vec2 rnd = normalize(vec2(rand(p.xy), rand(n.xy)));
+    vec2 rnd = normalize(vec2(random(p.xy), random(n.xy)));
 
     float ao = 0.0f;
     float rad = 1.0 / p.z;
@@ -221,6 +122,34 @@ float ambientOcclusion(vec2 uv) {
     return 1.0 - ao;
 }
 
+vec3 godrays(
+    float density,
+    float weight,
+    float decay,
+    vec2 screenSpaceLightPos,
+    vec2 uv,
+    vec3 sun
+) {
+    const int numSamples = 28;
+    vec3 fragColor = vec3(0.0);
+
+    vec2 deltaTextCoord = vec2(uv - screenSpaceLightPos.xy);
+
+    vec2 textCoo = uv.xy;
+    deltaTextCoord *= (1.0 / float(numSamples)) * density;
+    float illuminationDecay = 1.0;
+
+    for (int i = 0; i < numSamples; i++) {
+        textCoo -= deltaTextCoord;
+        vec3 samp = texture2D(depth_buffer, textCoo).x == 1.0 ? sun : vec3(0.0);
+        samp *= illuminationDecay * weight;
+        fragColor += samp;
+        illuminationDecay *= decay;
+    }
+
+    return texture2D(depth_buffer, uv).x == 1.0 ? positiveMix(sun, fragColor) : fragColor;
+}
+
 vec3 renderPixel (vec2 uv) {
     vec3 color = vec3(0.0);
     vec3 albedo = texture(color_buffer, uv).rgb;
@@ -230,7 +159,7 @@ vec3 renderPixel (vec2 uv) {
 
     color = texture(color_buffer, uv).rgb;
 
-    vec3 v = getView(uv);
+    vec3 v = getView(uv, depth, inverse(rotation), inverse(projection));
 
     if (length(normal) != 0) {
         /// LIGHTING
@@ -263,10 +192,10 @@ vec3 renderPixel (vec2 uv) {
         c += ambientOcclusion(uv + vec2(-aspectRatio, 1.0) / res.y);
         c += ambientOcclusion(uv + vec2(aspectRatio, -1.0) / res.y);
         c += ambientOcclusion(uv + vec2(-aspectRatio, -1.0) / res.y);
-        color *= c / 5;
+        color = mix(color, color * c / 5, 0.5);
     }
 
-    { // Bloom
+    /*{ // Bloom
         int radius = 4;
         vec4 c = texture(glow_buffer, uv);
         vec2 res = textureSize(glow_buffer, 0);
@@ -282,7 +211,7 @@ vec3 renderPixel (vec2 uv) {
             }
         }
         color += c.rgb / i * .8;
-    }
+    }*/
 
     if (depth != 0.0) {
         /// FOG
@@ -299,12 +228,15 @@ vec3 renderPixel (vec2 uv) {
         vec3 sky = mix(skyColor, positiveMix(skyColor, haloColor), pow(mixedSunity, 6 - sunsetity * 4) * pow(sunsetity, 3) / 2.8);
         vec3 halo = pow(sunity, 5 - sunsetity * 4) * sqrt(sunsetity * 4) / 2 * haloColor;
 
-        vec3 sun = halo;
-        if (depth == 1.0) sun += vec3(0.48, 0.36, 0.0) * pow(sunity, 37.0) + vec3(pow(sunity, 51.0));
-
-        color = mix(positiveMix(sky, sun), color, visibility);
+        color = mix(positiveMix(sky, halo), color, visibility);
 
         color = mix(color, color * sky, clamp(edge * 72, 0.0, 1.0) * (1 - visibility));
+
+        vec4 screenSpaceSunPos = (projection * (rotation * vec4(sunNormal, 1.0)));
+        screenSpaceSunPos.xyz = screenSpaceSunPos.xyz / screenSpaceSunPos.w / 2.0 + 0.5;
+
+        vec3 sun = vec3(pow(sunity, 35.0) * 2.4, pow(sunity, 47.0) * 2.1, pow(sunity, 57.0) * 2);
+        color += godrays(0.85, 0.06, 0.98, screenSpaceSunPos.xy, uv, sun) * max(sqrt(screenSpaceSunPos.z), 0.0) / 2.0;
     }
 
     return color;

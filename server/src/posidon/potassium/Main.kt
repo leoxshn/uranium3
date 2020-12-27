@@ -5,14 +5,13 @@ import posidon.potassium.net.Server
 import posidon.potassium.world.EarthWorld
 import posidon.potassium.world.Worlds
 import java.io.IOException
-import java.util.concurrent.TimeUnit
 
 var running = true
 inline fun loop(methods: () -> Unit) { while (running) methods() }
 
 fun main(args: Array<String>) {
 	Thread(Console()).start()
-	Thread(Server()).start()
+	Server.start()
 	Worlds.start(EarthWorld(7480135))
 
 	var lastTime: Long = System.nanoTime()

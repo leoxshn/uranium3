@@ -4,7 +4,7 @@ import posidon.uranium.graphics.Renderer
 import posidon.uranium.nodes.spatial.Eye
 import kotlin.math.round
 
-class FpsCounter(name: String) : Node(name) {
+class FpsCounter : Node() {
 
     private var renderCycles = 0
     private var localDelta = 0.0

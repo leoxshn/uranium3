@@ -5,6 +5,7 @@ import kotlin.math.*
 
 data class Vec3f(var x: Float, var y: Float, var z: Float) {
 
+    inline fun set(v: Vec3i) = set(v.x.toFloat(), v.y.toFloat(), v.z.toFloat())
     inline fun set(v: Vec3f) = set(v.x, v.y, v.z)
     inline fun set(x: Float, y: Float, z: Float) {
         this.x = x

@@ -1,14 +1,9 @@
 package posidon.uranium.voxel
 
+import posidon.library.types.Vec2f
 import posidon.library.types.Vec3i
-import posidon.uranium.graphics.Renderer
 import posidon.uranium.graphics.Mesh
-import posidon.uranium.graphics.Window
-import posidon.uranium.nodes.spatial.Eye
-import kotlin.collections.ArrayList
-import kotlin.concurrent.thread
-import kotlin.math.cos
-import kotlin.math.sin
+import posidon.uranium.graphics.Renderer
 import kotlin.math.sqrt
 
 abstract class VoxelChunk<V : Voxel>(
@@ -16,76 +11,88 @@ abstract class VoxelChunk<V : Voxel>(
     val chunkMap: VoxelChunkMap<V, *>
 ) {
 
-    val blocks = arrayOfNulls<Voxel>(size * size * size)
+    inline val size get() = chunkMap.chunkSize
 
-    var isCloseEnough = true
     private var willBeRendered = false
+    var useCounter = 0
 
     var mesh: Mesh? = null
         private set
 
+    val isVisible get() = willBeRendered
 
-    val isVisible get() = isCloseEnough && willBeRendered
+    val blocks = arrayOfNulls<Voxel>(size * size * size)
 
-    inline val size get() = chunkMap.chunkSize
-
-    inline val absolutePosition get() = position * size
-
-    inline val allNeighboringChunksAreLoaded get() = chunkMap[position.copy(x = position.x + 1)] != null &&
-        chunkMap[position.copy(x = position.x - 1)] != null &&
-        chunkMap[position.copy(y = position.y + 1)] != null &&
-        chunkMap[position.copy(y = position.y - 1)] != null &&
-        chunkMap[position.copy(z = position.z + 1)] != null &&
-        chunkMap[position.copy(z = position.z - 1)] != null
-
-
-    operator fun get(pos: Vec3i): V? = blocks[pos.x * size * size + pos.y * size + pos.z] as V?
+    operator fun get(pos: Vec3i): V? = get(pos.z, pos.y, pos.z)
     operator fun get(x: Int, y: Int, z: Int): V? = blocks[x * size * size + y * size + z] as V?
-    operator fun set(pos: Vec3i, voxel: V?) { blocks[pos.x * size * size + pos.y * size + pos.z] = voxel }
+    operator fun set(pos: Vec3i, voxel: V?) = set(pos.x, pos.y, pos.z, voxel)
+    operator fun set(x: Int, y: Int, z: Int, voxel: V?) { blocks[x * size * size + y * size + z] = voxel }
 
-    fun isInFov(eye: Eye) : Boolean {
-        val posRelToEye = absolutePosition - eye.position.toVec3i()
-        val rotY = Math.toRadians((eye.rotation.y - 180).toDouble())
-        val cosRY = cos(rotY)
-        val sinRY = sin(rotY)
-        val rotX = Math.toRadians(eye.rotation.x.toDouble())
-        val cosRX = cos(rotX)
-        val sinRX = sin(rotX)
-        val x = (posRelToEye.x * cosRY - posRelToEye.z * sinRY) * cosRX + posRelToEye.y * sinRX
-        val z = (posRelToEye.z * cosRY + posRelToEye.x * sinRY) * cosRX + posRelToEye.y * sinRX
-        val y = posRelToEye.y * cosRX - z * sinRX
-        val maxXOffset: Double = z * Window.width / Window.height
-        val maxYOffset = z * cosRX + posRelToEye.y * sinRX
-        return z > -chunkMap.chunkSize && x < maxXOffset && x > -maxXOffset && y < maxYOffset && y > -maxYOffset
+    inline fun withNeighborsLoaded(fn: () -> Unit) {
+        val isTopChunk = position.y == chunkMap.sizeInChunks - 1
+        val isBottomChunk = position.y == 0
+        val bx = chunkMap[position.copy(x = chunkMap.clipChunkHorizontal(position.x + 1))]
+        val sx = chunkMap[position.copy(x = chunkMap.clipChunkHorizontal(position.x - 1))]
+        val bz = chunkMap[position.copy(z = chunkMap.clipChunkHorizontal(position.z + 1))]
+        val sz = chunkMap[position.copy(z = chunkMap.clipChunkHorizontal(position.z - 1))]
+        if (bx != null && sx != null && bz != null && sz != null) {
+            bx.useCounter++
+            sx.useCounter++
+            bz.useCounter++
+            sz.useCounter++
+            if ((isTopChunk || chunkMap[position.copy(y = position.y + 1)] != null)) {
+                val by = if (isTopChunk) null else chunkMap[position.copy(y = position.y + 1)].apply { useCounter++ }
+                if ((isBottomChunk || chunkMap[position.copy(y = position.y - 1)] != null)) {
+                    val sy = if (isBottomChunk) null else chunkMap[position.copy(y = position.y - 1)].apply { useCounter++ }
+                    fn()
+                    sy?.useCounter?.dec()
+                }
+                by?.useCounter?.dec()
+            }
+            bx.useCounter--
+            sx.useCounter--
+            bz.useCounter--
+            sz.useCounter--
+        }
     }
 
-    fun generateMeshAsync(priority: Int, onEnd: () -> Unit = {}) = thread (isDaemon = true, priority = priority) {
+    fun generateMesh() {
 
-        data class VoxelFace(val voxel: Voxel) {
-            var transparent = false
-            var side = 0
-            fun equals(face: VoxelFace?) = face!!.transparent == transparent && face.voxel.id == voxel.id
+        data class VoxelFace(
+            val uv: Vec2f,
+            var transparent: Boolean,
+            var side: Int
+        ) {
+            fun isSame(face: VoxelFace) = face.uv == uv
         }
 
         fun getVoxelFace(x: Int, y: Int, z: Int, side: Int): VoxelFace? {
             val chunk = when {
-                x > size - 1 -> chunkMap[position.copy(x = position.x + 1)]!!
-                y > size - 1 -> chunkMap[position.copy(y = position.y + 1)]!!
-                z > size - 1 -> chunkMap[position.copy(z = position.z + 1)]!!
-                x < 0 -> chunkMap[position.copy(x = position.x - 1)]!!
-                y < 0 -> chunkMap[position.copy(y = position.y - 1)]!!
-                z < 0 -> chunkMap[position.copy(z = position.z - 1)]!!
+                y >= size ->
+                    if (position.y == chunkMap.heightInChunks - 1) return null
+                    else chunkMap[position.copy(y = position.y + 1)]!!
+                y < 0 ->
+                    if (position.y == 0) return null
+                    else chunkMap[position.copy(y = position.y - 1)]!!
+                x >= size -> chunkMap[position.copy(x = chunkMap.clipChunkHorizontal(position.x + 1))]!!
+                z >= size -> chunkMap[position.copy(z = chunkMap.clipChunkHorizontal(position.z + 1))]!!
+                x < 0 -> chunkMap[position.copy(x = chunkMap.clipChunkHorizontal(position.x - 1))]!!
+                z < 0 -> chunkMap[position.copy(z = chunkMap.clipChunkHorizontal(position.z - 1))]!!
                 else -> return this[x, y, z]?.let {
-                    VoxelFace(it).apply { this.side = side }
+                    VoxelFace(it.getUV(), false, side)
                 }
             }
 
-            val smallX = if (x % size < 0) size + x % size else x % size
-            val smallY = if (y % size < 0) size + y % size else y % size
-            val smallZ = if (z % size < 0) size + z % size else z % size
+            val rx = x % size
+            val ry = y % size
+            val rz = z % size
+
+            val smallX = if (rx < 0) size + rx else rx
+            val smallY = if (ry < 0) size + ry else ry
+            val smallZ = if (rz < 0) size + rz else rz
 
             return chunk[smallX, smallY, smallZ]?.let {
-                VoxelFace(it).apply { this.side = side }
+                VoxelFace(it.getUV(), false, side)
             }
         }
 
@@ -107,10 +114,8 @@ abstract class VoxelChunk<V : Voxel>(
 
         /**
          * We start with the lesser-spotted boolean for-loop (also known as the old flippy floppy).
-         *
          * The variable backFace will be TRUE on the first iteration and FALSE on the second - this allows
          * us to track which direction the indices should run during creation of the quad.
-         *
          * This loop runs twice, and the inner loop 3 times - totally 6 iterations - one for each
          * voxel face.
          */
@@ -141,7 +146,11 @@ abstract class VoxelChunk<V : Voxel>(
                         while (x[u] < size) {
                             voxelFace = getVoxelFace(x[0], x[1], x[2], side)
                             voxelFace1 = getVoxelFace(x[0] + q[0], x[1] + q[1], x[2] + q[2], side)
-                            mask[n++] = if (voxelFace != null && voxelFace1 != null && voxelFace.equals(voxelFace1)) null else if (backFace) voxelFace1 else voxelFace
+                            mask[n++] = when {
+                                voxelFace != null && voxelFace1 != null && voxelFace.isSame(voxelFace1) -> null
+                                backFace -> voxelFace1
+                                else -> voxelFace
+                            }
                             x[u]++
                         }
                         x[v]++
@@ -155,7 +164,7 @@ abstract class VoxelChunk<V : Voxel>(
                         while (i < size) {
                             if (mask[n] != null) {
                                 var w = 1
-                                while (i + w < size && mask[n + w] != null && mask[n + w]!!.equals(mask[n])) {
+                                while (i + w < size && mask[n + w] != null && mask[n + w]!!.isSame(mask[n]!!)) {
                                     w++
                                 }
 
@@ -165,7 +174,7 @@ abstract class VoxelChunk<V : Voxel>(
                                 while (j + h < size) {
                                     k = 0
                                     while (k < w) {
-                                        if (mask[n + k + h * size] == null || !mask[n + k + h * size]!!.equals(mask[n])) {
+                                        if (mask[n + k + h * size] == null || !mask[n + k + h * size]!!.isSame(mask[n]!!)) {
                                             done = true
                                             break
                                         }
@@ -198,12 +207,12 @@ abstract class VoxelChunk<V : Voxel>(
 
                                     val minIndex = uv.size / 2
 
-                                    fun addPoint(x: Int, y: Int, z: Int, nx: Int, ny: Int, nz: Int, voxel: Voxel) {
+                                    fun addPoint(x: Int, y: Int, z: Int, nx: Int, ny: Int, nz: Int, voxelUv: Vec2f) {
                                         vertices.add(x.toFloat())
                                         vertices.add(y.toFloat())
                                         vertices.add(z.toFloat())
 
-                                        val (uvX, uvY) = voxel.getUV()
+                                        val (uvX, uvY) = voxelUv
                                         uv.add(uvX)
                                         uv.add(uvY)
 
@@ -241,12 +250,12 @@ abstract class VoxelChunk<V : Voxel>(
                                         nz = (nz / length).toInt()
                                     }
 
-                                    val voxel = mask[n]!!.voxel
+                                    val blockUv = mask[n]!!.uv
 
-                                    addPoint(x[0], x[1], x[2], nx, ny, nz, voxel)
-                                    addPoint(x[0] + dv[0], x[1] + dv[1], x[2] + dv[2], nx, ny, nz, voxel)
-                                    addPoint(x[0] + du[0], x[1] + du[1], x[2] + du[2], nx, ny, nz, voxel)
-                                    addPoint(x[0] + du[0] + dv[0], x[1] + du[1] + dv[1], x[2] + du[2] + dv[2], nx, ny, nz, voxel)
+                                    addPoint(x[0], x[1], x[2], nx, ny, nz, blockUv)
+                                    addPoint(x[0] + dv[0], x[1] + dv[1], x[2] + dv[2], nx, ny, nz, blockUv)
+                                    addPoint(x[0] + du[0], x[1] + du[1], x[2] + du[2], nx, ny, nz, blockUv)
+                                    addPoint(x[0] + du[0] + dv[0], x[1] + du[1] + dv[1], x[2] + du[2] + dv[2], nx, ny, nz, blockUv)
                                 }
 
                                 /*
@@ -291,18 +300,11 @@ abstract class VoxelChunk<V : Voxel>(
                 mesh = null
                 willBeRendered = false
             } else {
-                mesh = Mesh(tmpIndices, Mesh.VBO(tmpVertices, 3), Mesh.VBO(tmpUv, 2), Mesh.VBO(tmpNormals, 3))
+                mesh = Mesh(tmpIndices, Mesh.VBO(3, *tmpVertices), Mesh.VBO(2, *tmpUv), Mesh.VBO(3, *tmpNormals))
                 willBeRendered = true
             }
             oldMesh?.destroy()
         }
-
-        vertices.clear()
-        indices.clear()
-        uv.clear()
-        normals.clear()
-
-        onEnd()
     }
 
     fun destroy() {

@@ -1,12 +1,12 @@
 package posidon.uranium.input
 
-import org.lwjgl.glfw.*
+import org.lwjgl.glfw.GLFW
 import posidon.library.types.Vec2f
-import posidon.uranium.graphics.Window
 import posidon.uranium.events.KeyPressedEvent
 import posidon.uranium.events.MouseButtonPressedEvent
 import posidon.uranium.events.MouseMovedEvent
 import posidon.uranium.events.ScrollEvent
+import posidon.uranium.graphics.Window
 import posidon.uranium.nodes.Scene
 
 object Input {
@@ -28,8 +28,10 @@ object Input {
     fun isButtonDown(btn: Int): Boolean = mouseButtons[btn]
 
     internal fun onKeyPressed(window: Long, key: Int, scanCode: Int, action: Int, mods: Int) {
-        keys[key] = action != GLFW.GLFW_RELEASE
-        Scene.passEvent(KeyPressedEvent(System.currentTimeMillis(), key, action))
+        if (key != GLFW.GLFW_KEY_UNKNOWN) {
+            keys[key] = action != GLFW.GLFW_RELEASE
+            Scene.passEvent(KeyPressedEvent(System.currentTimeMillis(), key, action))
+        }
     }
 
     internal fun onMouseButtonPress(window: Long, btn: Int, action: Int, mods: Int) {

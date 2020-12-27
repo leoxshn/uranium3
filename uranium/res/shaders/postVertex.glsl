@@ -1,4 +1,3 @@
-#version 420 core
 
 in vec2 inVertex;
 out vec2 uv;

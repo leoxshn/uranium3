@@ -8,9 +8,7 @@ import posidon.uranium.graphics.*
 import posidon.uranium.nodes.Node
 import posidon.uranium.nodes.spatial.Eye
 
-abstract class View(
-    name: String
-) : Node(name) {
+abstract class View : Node() {
 
     val transform = Transform2D(
         Vec2i.zero(),
@@ -162,13 +160,8 @@ abstract class View(
     }
 
     companion object {
-        var shader = Shader("/shaders/2DVertex.glsl", "/shaders/2DFragment.glsl")
-        var textShader = Shader("/shaders/textVertex.glsl", "/shaders/textFragment.glsl")
-
-        fun init() {
-            shader.create()
-            textShader.create()
-        }
+        var shader = Shader("/shaders/2DVertex.glsl", "/shaders/2DFragment.glsl").also { Renderer.runOnThread { it.create() } }
+        var textShader = Shader("/shaders/textVertex.glsl", "/shaders/textFragment.glsl").also { Renderer.runOnThread { it.create() } }
 
         fun destroy() {
             shader.destroy()

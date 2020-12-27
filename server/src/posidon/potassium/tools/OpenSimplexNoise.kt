@@ -2,26 +2,34 @@ package posidon.potassium.tools
 
 import kotlin.experimental.and
 import kotlin.experimental.or
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
 
 class OpenSimplexNoise {
 
-    inline fun get(x: Double, y: Double, scale: Int = 1, offset: Int = 0, convertToMin0Max1: Boolean = true): Double {
-        val a = eval((x + offset) / scale, (y + offset) / scale)
-        return if (convertToMin0Max1) (a + 1) / 2 else a
-    }
-    inline fun get(x: Double, y: Double, z: Double, scale: Int = 1, offset: Int = 0, convertToMin0Max1: Boolean = true): Double {
-        val a = eval((x + offset) / scale, (y + offset) / scale, (z + offset) / scale)
-        return if (convertToMin0Max1) (a + 1) / 2 else a
-    }
-    inline fun get(x: Double, y: Double, z: Double, w: Double, scale: Int = 1, offset: Int = 0, convertToMin0Max1: Boolean = true): Double {
-        val a = eval((x + offset) / scale, (y + offset) / scale, (z + offset) / scale, (w + offset) / scale)
-        return if (convertToMin0Max1) (a + 1) / 2 else a
+    val mapSize: Int
+
+    fun tile(x: Double, y: Double, scale: Int = 1, offset: Double = 0.0): Double {
+
+        val tau = 2 * PI
+
+        val s = x / mapSize
+        val t = y / mapSize
+
+        val nx = (offset + cos(tau * s) * -2 / tau) / scale * mapSize
+        val ny = (offset + cos(tau * t) * -2 / tau) / scale * mapSize
+        val nz = (offset + sin(tau * s) * -2 / tau) / scale * mapSize
+        val nw = (offset + sin(tau * t) * -2 / tau) / scale * mapSize
+
+        return eval(nx, ny, nz, nw)
     }
 
     private var perm: ShortArray
     private var permGradIndex3D: ShortArray
 
-    constructor(perm: ShortArray) {
+    constructor(perm: ShortArray, mapSize: Int) {
+        this.mapSize = mapSize
         this.perm = perm
         permGradIndex3D = ShortArray(256)
         for (i in 0..255) { //Since 3D has 24 gradients, simple bitmask won't work, so precompute modulo array.
@@ -29,7 +37,8 @@ class OpenSimplexNoise {
         }
     }
 
-    constructor(seed: Long = DEFAULT_SEED) {
+    constructor(seed: Long, mapSize: Int) {
+        this.mapSize = mapSize
         var seed = seed
         perm = ShortArray(256)
         permGradIndex3D = ShortArray(256)
@@ -48,7 +57,6 @@ class OpenSimplexNoise {
         }
     }
 
-    //2D OpenSimplex Noise.
     fun eval(x: Double, y: Double): Double { //Place input coordinates onto grid.
         val stretchOffset = (x + y) * STRETCH_CONSTANT_2D
         val xs = x + stretchOffset
@@ -150,36 +158,29 @@ class OpenSimplexNoise {
         return value / NORM_CONSTANT_2D
     }
 
-    //3D OpenSimplex Noise.
     fun eval(
         x: Double,
         y: Double,
         z: Double
-    ): Double { //Place input coordinates on simplectic honeycomb.
+    ): Double {
         val stretchOffset = (x + y + z) * STRETCH_CONSTANT_3D
         val xs = x + stretchOffset
         val ys = y + stretchOffset
         val zs = z + stretchOffset
-        //Floor to get simplectic honeycomb coordinates of rhombohedron (stretched cube) super-cell origin.
         val xsb = fastFloor(xs)
         val ysb = fastFloor(ys)
         val zsb = fastFloor(zs)
-        //Skew out to get actual coordinates of rhombohedron origin. We'll need these later.
         val squishOffset = (xsb + ysb + zsb) * SQUISH_CONSTANT_3D
         val xb = xsb + squishOffset
         val yb = ysb + squishOffset
         val zb = zsb + squishOffset
-        //Compute simplectic honeycomb coordinates relative to rhombohedral origin.
         val xins = xs - xsb
         val yins = ys - ysb
         val zins = zs - zsb
-        //Sum those together to get a value that determines which region we're in.
         val inSum = xins + yins + zins
-        //Positions relative to origin point.
         var dx0 = x - xb
         var dy0 = y - yb
         var dz0 = z - zb
-        //We'll be defining these inside the next block and using them afterwards.
         val dx_ext0: Double
         var dy_ext0: Double
         val dz_ext0: Double
@@ -193,8 +194,7 @@ class OpenSimplexNoise {
         var ysv_ext1: Int
         var zsv_ext1: Int
         var value = 0.0
-        if (inSum <= 1) { //We're inside the tetrahedron (3-Simplex) at (0,0,0)
-//Determine which two of (0,0,1), (0,1,0), (1,0,0) are closest.
+        if (inSum <= 1) {
             var aPoint: Byte = 0x01
             var aScore = xins
             var bPoint: Byte = 0x02
@@ -206,11 +206,9 @@ class OpenSimplexNoise {
                 aScore = zins
                 aPoint = 0x04
             }
-            //Now we determine the two lattice points not part of the tetrahedron that may contribute.
-//This depends on the closest two tetrahedral vertices, including (0,0,0)
             val wins = 1 - inSum
-            if (wins > aScore || wins > bScore) { //(0,0,0) is one of the closest two tetrahedral vertices.
-                val c = if (bScore > aScore) bPoint else aPoint //Our other closest vertex is the closest out of a and b.
+            if (wins > aScore || wins > bScore) {
+                val c = if (bScore > aScore) bPoint else aPoint
                 if (c and 0x01 == 0.toByte()) {
                     xsv_ext0 = xsb - 1
                     xsv_ext1 = xsb
@@ -688,7 +686,6 @@ class OpenSimplexNoise {
         return value / NORM_CONSTANT_3D
     }
 
-    //4D OpenSimplex Noise.
     fun eval(
         x: Double,
         y: Double,
@@ -774,7 +771,7 @@ class OpenSimplexNoise {
             val uins = 1 - inSum
             if (uins > aScore || uins > bScore) { //(0,0,0,0) is one of the closest two pentachoron vertices.
                 val c =
-                    if (bScore > aScore) bPoint else aPoint //Our other closest vertex is the closest out of a and b.
+                        if (bScore > aScore) bPoint else aPoint //Our other closest vertex is the closest out of a and b.
                 if (c and 0x01 == 0.toByte()) {
                     xsv_ext0 = xsb - 1
                     xsv_ext2 = xsb
@@ -994,7 +991,7 @@ class OpenSimplexNoise {
             val uins = 4 - inSum
             if (uins < aScore || uins < bScore) { //(1,1,1,1) is one of the closest two pentachoron vertices.
                 val c =
-                    if (bScore < aScore) bPoint else aPoint //Our other closest vertex is the closest out of a and b.
+                        if (bScore < aScore) bPoint else aPoint //Our other closest vertex is the closest out of a and b.
                 if (c and 0x01 != 0.toByte()) {
                     xsv_ext0 = xsb + 2
                     xsv_ext2 = xsb + 1
@@ -2022,62 +2019,61 @@ class OpenSimplexNoise {
         }
         //First extra vertex
         var attn_ext0 =
-            2 - dx_ext0 * dx_ext0 - dy_ext0 * dy_ext0 - dz_ext0 * dz_ext0 - dw_ext0 * dw_ext0
+                2 - dx_ext0 * dx_ext0 - dy_ext0 * dy_ext0 - dz_ext0 * dz_ext0 - dw_ext0 * dw_ext0
         if (attn_ext0 > 0) {
             attn_ext0 *= attn_ext0
             value += attn_ext0 * attn_ext0 * extrapolate(
-                xsv_ext0,
-                ysv_ext0,
-                zsv_ext0,
-                wsv_ext0,
-                dx_ext0,
-                dy_ext0,
-                dz_ext0,
-                dw_ext0
+                    xsv_ext0,
+                    ysv_ext0,
+                    zsv_ext0,
+                    wsv_ext0,
+                    dx_ext0,
+                    dy_ext0,
+                    dz_ext0,
+                    dw_ext0
             )
         }
         //Second extra vertex
         var attn_ext1 =
-            2 - dx_ext1 * dx_ext1 - dy_ext1 * dy_ext1 - dz_ext1 * dz_ext1 - dw_ext1 * dw_ext1
+                2 - dx_ext1 * dx_ext1 - dy_ext1 * dy_ext1 - dz_ext1 * dz_ext1 - dw_ext1 * dw_ext1
         if (attn_ext1 > 0) {
             attn_ext1 *= attn_ext1
             value += attn_ext1 * attn_ext1 * extrapolate(
-                xsv_ext1,
-                ysv_ext1,
-                zsv_ext1,
-                wsv_ext1,
-                dx_ext1,
-                dy_ext1,
-                dz_ext1,
-                dw_ext1
+                    xsv_ext1,
+                    ysv_ext1,
+                    zsv_ext1,
+                    wsv_ext1,
+                    dx_ext1,
+                    dy_ext1,
+                    dz_ext1,
+                    dw_ext1
             )
         }
         //Third extra vertex
         var attn_ext2 =
-            2 - dx_ext2 * dx_ext2 - dy_ext2 * dy_ext2 - dz_ext2 * dz_ext2 - dw_ext2 * dw_ext2
+                2 - dx_ext2 * dx_ext2 - dy_ext2 * dy_ext2 - dz_ext2 * dz_ext2 - dw_ext2 * dw_ext2
         if (attn_ext2 > 0) {
             attn_ext2 *= attn_ext2
             value += attn_ext2 * attn_ext2 * extrapolate(
-                xsv_ext2,
-                ysv_ext2,
-                zsv_ext2,
-                wsv_ext2,
-                dx_ext2,
-                dy_ext2,
-                dz_ext2,
-                dw_ext2
+                    xsv_ext2,
+                    ysv_ext2,
+                    zsv_ext2,
+                    wsv_ext2,
+                    dx_ext2,
+                    dy_ext2,
+                    dz_ext2,
+                    dw_ext2
             )
         }
         return value / NORM_CONSTANT_4D
     }
 
-    private fun extrapolate(xsb: Int, ysb: Int, dx: Double, dy: Double): Double {
+    private inline fun extrapolate(xsb: Int, ysb: Int, dx: Double, dy: Double): Double {
         val index: Int = (perm[perm[xsb and 0xFF] + ysb and 0xFF] and 0x0E).toInt()
-        return (gradients2D[index] * dx
-                + gradients2D[index + 1] * dy)
+        return (gradients2D[index] * dx + gradients2D[index + 1] * dy)
     }
 
-    private fun extrapolate(
+    private inline fun extrapolate(
         xsb: Int,
         ysb: Int,
         zsb: Int,
@@ -2089,7 +2085,7 @@ class OpenSimplexNoise {
         return gradients3D[index] * dx + gradients3D[index + 1] * dy + gradients3D[index + 2] * dz
     }
 
-    private fun extrapolate(
+    private inline fun extrapolate(
         xsb: Int,
         ysb: Int,
         zsb: Int,
@@ -2104,33 +2100,28 @@ class OpenSimplexNoise {
     }
 
     companion object {
-        private const val STRETCH_CONSTANT_2D = -0.211324865405187 //(1/Math.sqrt(2+1)-1)/2;
-        private const val SQUISH_CONSTANT_2D = 0.366025403784439 //(Math.sqrt(2+1)-1)/2;
-        private const val STRETCH_CONSTANT_3D = -1.0 / 6 //(1/Math.sqrt(3+1)-1)/3;
-        private const val SQUISH_CONSTANT_3D = 1.0 / 3 //(Math.sqrt(3+1)-1)/3;
-        private const val STRETCH_CONSTANT_4D = -0.138196601125011 //(1/Math.sqrt(4+1)-1)/4;
-        private const val SQUISH_CONSTANT_4D = 0.309016994374947 //(Math.sqrt(4+1)-1)/4;
+        private const val STRETCH_CONSTANT_2D = -0.211324865405187 //(1/sqrt(2+1)-1)/2
+        private const val SQUISH_CONSTANT_2D = 0.366025403784439 //(sqrt(2+1)-1)/2
+        private const val STRETCH_CONSTANT_3D = -1.0 / 6 //(1/sqrt(3+1)-1)/3
+        private const val SQUISH_CONSTANT_3D = 1.0 / 3 //(sqrt(3+1)-1)/3
+        private const val STRETCH_CONSTANT_4D = -0.138196601125011 //(1/sqrt(4+1)-1)/4
+        private const val SQUISH_CONSTANT_4D = 0.309016994374947 //(sqrt(4+1)-1)/4
         private const val NORM_CONSTANT_2D = 47.0
         private const val NORM_CONSTANT_3D = 103.0
         private const val NORM_CONSTANT_4D = 30.0
-        private const val DEFAULT_SEED: Long = 0
-        private fun fastFloor(x: Double): Int {
+
+        private inline fun fastFloor(x: Double): Int {
             val xi = x.toInt()
             return if (x < xi) xi - 1 else xi
         }
 
-        //Gradients for 2D. They approximate the directions to the
-//vertices of an octagon from the center.
         private val gradients2D = byteArrayOf(
             5, 2, 2, 5,
             -5, 2, -2, 5,
             5, -2, 2, -5,
             -5, -2, -2, -5
         )
-        //Gradients for 3D. They approximate the directions to the
-//vertices of a rhombicuboctahedron from the center, skewed so
-//that the triangular and square facets can be inscribed inside
-//circles of the same radius.
+
         private val gradients3D = byteArrayOf(
             -11, 4, 4, -4, 11, 4, -4, 4, 11,
             11, 4, 4, 4, 11, 4, 4, 4, 11,
@@ -2141,10 +2132,7 @@ class OpenSimplexNoise {
             -11, -4, -4, -4, -11, -4, -4, -4, -11,
             11, -4, -4, 4, -11, -4, 4, -4, -11
         )
-        //Gradients for 4D. They approximate the directions to the
-//vertices of a disprismatotesseractihexadecachoron from the center,
-//skewed so that the tetrahedral and cubic facets can be inscribed inside
-//spheres of the same radius.
+
         private val gradients4D = byteArrayOf(
             3, 1, 1, 1, 1, 3, 1, 1, 1, 1, 3, 1, 1, 1, 1, 3,
             -3, 1, 1, 1, -1, 3, 1, 1, -1, 1, 3, 1, -1, 1, 1, 3,

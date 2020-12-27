@@ -34,7 +34,12 @@ object Renderer {
      */
     fun render(mesh: Mesh) {
         mesh.bind()
-        GL11.glDrawElements(GL11.GL_TRIANGLES, mesh.vertexCount, GL11.GL_UNSIGNED_INT, 0)
+        GL11C.nglDrawElements(GL11.GL_TRIANGLES, mesh.vertexCount, GL11.GL_UNSIGNED_INT, 0)
+    }
+
+    fun renderLines(mesh: Mesh) {
+        mesh.bind()
+        GL11C.nglDrawElements(GL11.GL_LINES, mesh.vertexCount, GL11.GL_UNSIGNED_INT, 0)
     }
 
     /**
@@ -45,15 +50,13 @@ object Renderer {
     }
 
     internal fun init() {
-        GL11.glEnable(GL11.GL_CULL_FACE)
-        GL11.glCullFace(GL11.GL_BACK)
-        GL11.glEnable(GL11.GL_BLEND)
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA)
-        GL13.glActiveTexture(GL13.GL_TEXTURE0)
+        GL11C.glEnable(GL11.GL_CULL_FACE)
+        GL11C.glCullFace(GL11.GL_BACK)
+        GL11C.glEnable(GL11.GL_BLEND)
+        GL11C.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA)
+        GL13C.glActiveTexture(GL13.GL_TEXTURE0)
 
         Mesh.init()
-        View.init()
-        VoxelChunkMap.init()
     }
 
     internal fun destroy() {
@@ -73,16 +76,16 @@ object Renderer {
 
     internal fun loop() {
         while (Window.isOpen && GameLoop.running) {
-            Scene.nextBuffer(null)
-            eye?.let { Scene.render(this, it) }
-            Window.swapBuffers()
-            Window.update()
-
             val it = eventQueue.iterator()
             while (it.hasNext()) {
                 it.next()()
                 it.remove()
             }
+
+            Scene.nextBuffer(null)
+            eye?.let { Scene.render(this, it) }
+            Window.swapBuffers()
+            Window.update()
         }
     }
 }

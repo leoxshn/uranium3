@@ -3,31 +3,28 @@ package posidon.uraniumGame
 import posidon.library.types.Vec2f
 import posidon.library.types.Vec3f
 import posidon.library.types.Vec3i
+import posidon.uranium.events.*
+import posidon.uranium.graphics.Filter
 import posidon.uranium.graphics.Window
 import posidon.uranium.input.Button
-import posidon.uranium.events.PacketReceivedEvent
 import posidon.uranium.input.Input
-import posidon.uranium.events.Event
-import posidon.uranium.events.MouseMovedEvent
-import posidon.uranium.nodes.spatial.Eye
-import posidon.uranium.net.Client
-import posidon.uraniumGame.net.packets.MovPacket
 import posidon.uranium.input.Key
-import posidon.uranium.events.KeyPressedEvent
-import posidon.uranium.events.MouseButtonPressedEvent
-import posidon.uranium.graphics.Filter
+import posidon.uranium.net.Client
 import posidon.uranium.nodes.spatial.BoundingBox
+import posidon.uranium.nodes.spatial.Eye
 import posidon.uranium.nodes.spatial.Spatial
 import posidon.uraniumGame.net.packets.BlockBreakPacket
-import posidon.uraniumGame.voxel.Block
+import posidon.uraniumGame.net.packets.MovPacket
 import posidon.uraniumGame.voxel.ChunkMap
-import kotlin.math.*
+import kotlin.math.cos
+import kotlin.math.min
+import kotlin.math.pow
+import kotlin.math.sin
 
 class Player(
-    name: String,
     val world: World,
     val speedEffect: Filter
-) : Spatial(name) {
+) : Spatial() {
 
     val normalFov = 72f
     val sprintFov = 95f
@@ -35,20 +32,20 @@ class Player(
 
     var flySpeed = 18f
 
-    var moveSpeed = 5f
+    var moveSpeed = 7f
     var jumpForce = 22f
     var sensitivity = 0.35f
     var gravity = false
 
-    var sprintMultiplier = 1.8f
+    var sprintMultiplier = 1.5f
 
 
-    val eye = Eye("eye").apply {
+    val eye = Eye().apply {
         position.y = .8f
         fov = normalFov
     }
 
-    val boundingBox = BoundingBox("hitpox").apply {
+    val boundingBox = BoundingBox().apply {
         size.set(.6f, 2.4f, .6f)
     }
 
@@ -143,8 +140,20 @@ class Player(
         }
 
         if (velocity.length != 0f) {
+            val worldSize = world.chunkMap.sizeInVoxels
+            if (position.x < 0) {
+                position.x = worldSize + position.x % worldSize
+            } else if (position.x >= worldSize) {
+                position.x = position.x % worldSize
+            }
+            if (position.z < 0) {
+                position.z = worldSize + position.z % worldSize
+            } else if (position.z >= worldSize) {
+                position.z = position.z % worldSize
+            }
             Client.send(MovPacket(position))
             eye.updateMatrix()
+            world.updateCoords()
         }
 
         val transitionSpeed = delta.toFloat() * 15f
@@ -165,6 +174,9 @@ class Player(
                 if (eye.rotation.y > 360) eye.rotation.y -= 360f
                 else if (eye.rotation.y < 0) eye.rotation.y += 360f
                 eye.updateMatrix()
+                //selectBlock(world.chunkMap, 7)?.let {
+                //    world.selection.position.set(it)
+                //}
             }
             is PacketReceivedEvent -> {
                 when (event.tokens[0]) {
@@ -218,6 +230,7 @@ class Player(
                     if (!Window.mouseLocked) Window.mouseLocked = true
                     else {
                         selectBlock(world.chunkMap, 7)?.let {
+                            world.chunkMap.setBlock(it, null)?.let { world.chunkMap.generateChunkMesh(it) }
                             Client.send(BlockBreakPacket(it))
                         }
                     }
@@ -228,24 +241,16 @@ class Player(
 
     fun getDirection(): Vec3f {
 
-        var x = 0.0
-        var y = 0.0
-        var z = -1.0
-
         val radx = Math.toRadians(eye.rotation.x.toDouble())
         val rady = Math.toRadians(eye.rotation.y.toDouble())
 
         //Rotate X
-        //Ignore X ###############################################
-        val newY: Double = y * cos(radx) - z * sin(radx)
-        z = y * sin(radx) + z * cos(radx)
-        y = newY
+        val y = sin(radx)
+        var z = -cos(radx)
 
         //Rotate Y
-        val newX = x * cos(rady) + z * sin(rady)
-        //Ignore Y ###############################################
-        z = x * -sin(rady) + z * cos(rady)
-        x = newX
+        val x = z * sin(rady)
+        z *= cos(rady)
 
         return Vec3f(x.toFloat(), y.toFloat(), z.toFloat())
     }
@@ -256,7 +261,13 @@ class Player(
         val step = getDirection() * stepSize
         val p = eye.globalTransform.position.copy()
         while (i * stepSize < maxDistance) {
+            if (p.y < 0 || p.y >= world.chunkMap.heightInChunks * world.chunkMap.chunkSize) return null
+            p.x = world.chunkMap.clipVoxelHorizontal(p.x)
+            p.z = world.chunkMap.clipVoxelHorizontal(p.z)
             val pos = p.floorToVec3i()
+            //println("  --  --  --  --  ")
+            //println(p)
+            //println(pos)
             chunkMap.getBlock(pos)?.let {
                 return pos
             }

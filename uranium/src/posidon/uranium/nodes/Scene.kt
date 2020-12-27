@@ -9,9 +9,8 @@ import posidon.uranium.nodes.environment.NullEnvironment
 import posidon.uranium.nodes.spatial.Eye
 
 abstract class Scene(
-    name: String,
     val environment: Environment = NullEnvironment()
-) : Node(name) {
+) : Node() {
 
     final override fun update(delta: Double) {
         environment.update(delta)
@@ -30,10 +29,8 @@ abstract class Scene(
 
     companion object {
 
-        internal var current: Scene = object : Scene("") {}
+        internal var current: Scene = object : Scene() {}
             private set
-
-        operator fun get(path: String) = current[path]
 
         /**
          * The object handling atmosphere-related stuff

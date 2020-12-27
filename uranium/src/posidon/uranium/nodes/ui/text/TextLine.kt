@@ -5,13 +5,11 @@ import posidon.library.types.Vec3f
 import posidon.uranium.graphics.Mesh
 import posidon.uranium.graphics.Renderer
 import posidon.uranium.graphics.Window
-import posidon.uranium.nodes.spatial.Eye
 import posidon.uranium.nodes.ui.View
 
 class TextLine(
-    name: String,
     var font: MonospaceFont
-) : View(name) {
+) : View() {
 
     val color = Vec3f(1f, 1f, 1f)
     var string: String? = null

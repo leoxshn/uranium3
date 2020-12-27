@@ -1,9 +1,7 @@
 package posidon.uranium.graphics
 
 import org.lwjgl.glfw.GLFW
-import org.lwjgl.opengl.GL
-import org.lwjgl.opengl.GL11
-import org.lwjgl.opengl.GL30
+import org.lwjgl.opengl.*
 import posidon.library.types.Vec3f
 import posidon.uranium.events.WindowResizedEvent
 import posidon.uranium.input.Input
@@ -112,13 +110,13 @@ object Window : Renderer.FrameBuffer {
     internal fun swapBuffers() = GLFW.glfwSwapBuffers(id)
 
     override fun bind() {
-        GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0)
-        GL11.glViewport(0, 0, width, height)
+        GL30C.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0)
+        GL11C.glViewport(0, 0, width, height)
     }
 
     override fun clear() {
-        GL11.glClearColor(backgroundColor.x, backgroundColor.y, backgroundColor.z, 1.0f)
-        GL11.glClear(GL11.GL_COLOR_BUFFER_BIT or GL11.GL_DEPTH_BUFFER_BIT)
+        GL11C.glClearColor(backgroundColor.x, backgroundColor.y, backgroundColor.z, 1.0f)
+        GL11C.glClear(GL11.GL_COLOR_BUFFER_BIT or GL11.GL_DEPTH_BUFFER_BIT)
     }
 
     internal fun destroy() {

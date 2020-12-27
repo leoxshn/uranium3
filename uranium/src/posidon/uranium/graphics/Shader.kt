@@ -1,54 +1,55 @@
 package posidon.uranium.graphics
 
 import org.lwjgl.opengl.GL11
-import org.lwjgl.opengl.GL20
+import org.lwjgl.opengl.GL20C
 import org.lwjgl.system.MemoryUtil
 import posidon.library.types.Vec2f
 import posidon.library.types.Vec3f
 import posidon.library.util.Resources
 
-class Shader(vertexPath: String, fragmentPath: String) {
-
-    private val vertexFile = Resources.loadAsString(vertexPath)
-    private val fragmentFile = Resources.loadAsString(fragmentPath)
+class Shader(val vertexPath: String, val fragmentPath: String) {
     private var vertexID = 0
     private var fragmentID = 0
     var programID = 0
         private set
 
     fun create() {
-        programID = GL20.glCreateProgram()
-        vertexID = GL20.glCreateShader(GL20.GL_VERTEX_SHADER)
-        GL20.glShaderSource(vertexID, vertexFile)
-        GL20.glCompileShader(vertexID)
-        if (GL20.glGetShaderi(vertexID, GL20.GL_COMPILE_STATUS) == GL11.GL_FALSE) {
-            System.err.println("[SHADER ERROR - Vertex Shader]: " + GL20.glGetShaderInfoLog(vertexID))
+        val libFile = "#version 420 core\n" + Resources.loadAsString("/shaders/lib.glsl") + "\n#line 1\n"
+        val vertexFile = libFile + Resources.loadAsString(vertexPath)
+        val fragmentFile = libFile + Resources.loadAsString(fragmentPath)
+
+        programID = GL20C.glCreateProgram()
+        vertexID = GL20C.glCreateShader(GL20C.GL_VERTEX_SHADER)
+        GL20C.glShaderSource(vertexID, vertexFile)
+        GL20C.glCompileShader(vertexID)
+        if (GL20C.glGetShaderi(vertexID, GL20C.GL_COMPILE_STATUS) == GL11.GL_FALSE) {
+            System.err.println("[SHADER ERROR - Vertex Shader]: " + GL20C.glGetShaderInfoLog(vertexID))
             return
         }
-        fragmentID = GL20.glCreateShader(GL20.GL_FRAGMENT_SHADER)
-        GL20.glShaderSource(fragmentID, fragmentFile)
-        GL20.glCompileShader(fragmentID)
-        if (GL20.glGetShaderi(fragmentID, GL20.GL_COMPILE_STATUS) == GL11.GL_FALSE) {
-            System.err.println("[SHADER ERROR - Fragment Shader]: " + GL20.glGetShaderInfoLog(fragmentID))
+        fragmentID = GL20C.glCreateShader(GL20C.GL_FRAGMENT_SHADER)
+        GL20C.glShaderSource(fragmentID, fragmentFile)
+        GL20C.glCompileShader(fragmentID)
+        if (GL20C.glGetShaderi(fragmentID, GL20C.GL_COMPILE_STATUS) == GL11.GL_FALSE) {
+            System.err.println("[SHADER ERROR - Fragment Shader]: " + GL20C.glGetShaderInfoLog(fragmentID))
             return
         }
-        GL20.glAttachShader(programID, vertexID)
-        GL20.glAttachShader(programID, fragmentID)
-        GL20.glLinkProgram(programID)
-        if (GL20.glGetProgrami(programID, GL20.GL_LINK_STATUS) == GL11.GL_FALSE)
-            System.err.println("[SHADER ERROR - Linking]: " + GL20.glGetProgramInfoLog(programID))
-        GL20.glValidateProgram(programID)
-        if (GL20.glGetProgrami(programID, GL20.GL_VALIDATE_STATUS) == GL11.GL_FALSE)
-            System.err.println("[SHADER ERROR - Validation]: " + GL20.glGetProgramInfoLog(programID))
+        GL20C.glAttachShader(programID, vertexID)
+        GL20C.glAttachShader(programID, fragmentID)
+        GL20C.glLinkProgram(programID)
+        if (GL20C.glGetProgrami(programID, GL20C.GL_LINK_STATUS) == GL11.GL_FALSE)
+            System.err.println("[SHADER ERROR - Linking]: " + GL20C.glGetProgramInfoLog(programID))
+        GL20C.glValidateProgram(programID)
+        if (GL20C.glGetProgrami(programID, GL20C.GL_VALIDATE_STATUS) == GL11.GL_FALSE)
+            System.err.println("[SHADER ERROR - Validation]: " + GL20C.glGetProgramInfoLog(programID))
     }
 
-    inline fun getUniformLocation(name: String) = GL20.glGetUniformLocation(programID, name)
+    inline fun getUniformLocation(name: String) = GL20C.glGetUniformLocation(programID, name)
 
-    inline operator fun set(name: String, value: Float) = GL20.glUniform1f(getUniformLocation(name), value)
-    inline operator fun set(name: String, value: Int) = GL20.glUniform1i(getUniformLocation(name), value)
-    inline operator fun set(name: String, value: Boolean) = GL20.glUniform1i(getUniformLocation(name), if (value) 1 else 0)
-    inline operator fun set(name: String, value: Vec2f) = GL20.glUniform2f(getUniformLocation(name), value.x, value.y)
-    inline operator fun set(name: String, value: Vec3f) = GL20.glUniform3f(getUniformLocation(name), value.x, value.y, value.z)
+    inline operator fun set(name: String, value: Float) = GL20C.glUniform1f(getUniformLocation(name), value)
+    inline operator fun set(name: String, value: Int) = GL20C.glUniform1i(getUniformLocation(name), value)
+    inline operator fun set(name: String, value: Boolean) = GL20C.glUniform1i(getUniformLocation(name), if (value) 1 else 0)
+    inline operator fun set(name: String, value: Vec2f) = GL20C.glUniform2f(getUniformLocation(name), value.x, value.y)
+    inline operator fun set(name: String, value: Vec3f) = GL20C.glUniform3f(getUniformLocation(name), value.x, value.y, value.z)
 
     inline operator fun set(name: String, value: FloatArray) {
         for (i in value.indices) set("$name[$i]", value[i])
@@ -69,17 +70,17 @@ class Shader(vertexPath: String, fragmentPath: String) {
     inline operator fun set(name: String, value: Matrix4f) {
         val matrix = MemoryUtil.memAllocFloat(Matrix4f.SIZE * Matrix4f.SIZE)
         matrix.put(value.all).flip()
-        GL20.glUniformMatrix4fv(getUniformLocation(name), true, matrix)
+        GL20C.glUniformMatrix4fv(getUniformLocation(name), true, matrix)
         MemoryUtil.memFree(matrix)
     }
 
-    inline fun bind() = GL20.glUseProgram(programID)
+    inline fun bind() = GL20C.glUseProgram(programID)
 
     fun destroy() {
-        GL20.glDetachShader(programID, vertexID)
-        GL20.glDetachShader(programID, fragmentID)
-        GL20.glDeleteShader(vertexID)
-        GL20.glDeleteShader(fragmentID)
-        GL20.glDeleteProgram(programID)
+        GL20C.glDetachShader(programID, vertexID)
+        GL20C.glDetachShader(programID, fragmentID)
+        GL20C.glDeleteShader(vertexID)
+        GL20C.glDeleteShader(fragmentID)
+        GL20C.glDeleteProgram(programID)
     }
 }

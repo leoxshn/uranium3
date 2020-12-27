@@ -5,9 +5,9 @@ import posidon.uranium.nodes.ui.Gravity
 import posidon.uranium.nodes.ui.View
 import posidon.uranium.nodes.ui.text.TextLine
 
-class LoadingScreenScene : Scene("loading") {
+class LoadingScreenScene : Scene() {
 
-    val text = TextLine("component", Font()).apply {
+    val text = TextLine(Font()).apply {
         string = "Loading..."
         size.set(View.MATCH_PARENT, Font.SIZE)
         gravity = Gravity.CENTER

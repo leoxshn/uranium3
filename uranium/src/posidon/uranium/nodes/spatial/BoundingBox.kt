@@ -2,7 +2,7 @@ package posidon.uranium.nodes.spatial
 
 import posidon.library.types.Vec3f
 
-class BoundingBox(name: String) : Spatial(name), Collider {
+class BoundingBox : Spatial(), Collider {
 
     var size = Vec3f.zero()
     var centered = true

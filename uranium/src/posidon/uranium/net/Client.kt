@@ -1,7 +1,6 @@
 package posidon.uranium.net
 
 import posidon.uranium.events.PacketReceivedEvent
-import posidon.uranium.gameLoop.GameLoop
 import posidon.uranium.nodes.Scene
 import java.io.*
 import java.net.Socket

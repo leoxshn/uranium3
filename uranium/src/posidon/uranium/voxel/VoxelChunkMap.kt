@@ -1,43 +1,67 @@
 package posidon.uranium.voxel
 
-import org.lwjgl.opengl.GL11
+import org.lwjgl.opengl.GL11C
 import posidon.library.types.Vec3f
 import posidon.library.types.Vec3i
 import posidon.uranium.graphics.Renderer
 import posidon.uranium.graphics.Shader
 import posidon.uranium.nodes.Node
-import posidon.uranium.nodes.Scene
 import posidon.uranium.nodes.spatial.BoundingBox
 import posidon.uranium.nodes.spatial.Collider
 import posidon.uranium.nodes.spatial.Eye
-import java.util.concurrent.ConcurrentHashMap
-import kotlin.math.floor
 
-abstract class VoxelChunkMap<V : Voxel, C : VoxelChunk<V>>(name: String) : Node(name), Collider {
+abstract class VoxelChunkMap<V : Voxel, C : VoxelChunk<V>> : Node(), Collider {
+
+    val sizeInChunks = 16
+    val heightInChunks = 8
+
+    inline val sizeInVoxels get() = sizeInChunks * chunkSize
 
     abstract val chunkSize: Int
 
     companion object {
-        private val blockShader = Shader("/shaders/blockVertex.glsl", "/shaders/blockFragment.glsl")
-
-        internal fun init() {
-            blockShader.create()
-        }
+        private val blockShader = Shader("/shaders/blockVertex.glsl", "/shaders/blockFragment.glsl").also { Renderer.runOnThread { it.create() } }
 
         internal fun destroy() {
             blockShader.destroy()
         }
     }
 
-    protected val map = ConcurrentHashMap<Vec3i, C>()
+    private val array = arrayOfNulls<VoxelChunk<V>>(sizeInChunks * sizeInChunks * heightInChunks)
 
-    operator fun get(x: Int, y: Int, z: Int): C? = map[Vec3i(x, y, z)]
-    operator fun set(x: Int, y: Int, z: Int, chunk: C) { map[Vec3i(x, y, z)] = chunk }
-    operator fun get(v: Vec3i): C? = map[v]
-    operator fun set(v: Vec3i, chunk: C) { map[v] = chunk }
+    fun clipChunkHorizontal(x: Int): Int {
+        val r = x % sizeInChunks
+        return if (r < 0) sizeInChunks + r else r
+    }
+    fun clipChunkHorizontal(x: Float): Float {
+        val r = x % sizeInChunks
+        return if (r < 0) sizeInChunks + r else r
+    }
+    fun clipVoxelHorizontal(x: Int): Int {
+        val v = sizeInVoxels
+        val r = x % v
+        return if (r < 0) v + r else r
+    }
+    fun clipVoxelHorizontal(x: Float): Float {
+        val v = sizeInVoxels
+        val r = x % v
+        return if (r < 0) v + r else r
+    }
+
+    operator fun get(x: Int, y: Int, z: Int): C? {
+        when {
+            x < 0 || x >= sizeInChunks -> throw IllegalArgumentException("x = $x")
+            z < 0 || z >= sizeInChunks -> throw IllegalArgumentException("z = $z")
+            y < 0 || y >= heightInChunks -> throw IllegalArgumentException("y = $y")
+        }
+        return array[x * sizeInChunks * heightInChunks + y * sizeInChunks + z] as C?
+    }
+    operator fun set(x: Int, y: Int, z: Int, chunk: C?) { array[x * sizeInChunks * heightInChunks + y * sizeInChunks + z] = chunk }
+    operator fun get(v: Vec3i): C? = get(v.x, v.y, v.z)
+    operator fun set(v: Vec3i, chunk: C) = set(v.x, v.y, v.z, chunk)
 
     override fun render(renderer: Renderer, eye: Eye) {
-        GL11.glEnable(GL11.GL_DEPTH_TEST)
+        GL11C.glEnable(GL11C.GL_DEPTH_TEST)
 
         blockShader.bind()
         blockShader["view"] = eye.viewMatrix
@@ -45,9 +69,21 @@ abstract class VoxelChunkMap<V : Voxel, C : VoxelChunk<V>>(name: String) : Node(
 
         preRender(blockShader)
 
-        for (chunk in map.values) {
-            if (chunk.isVisible /*&& chunk.isInFov(eye)*/) {
-                blockShader["position"] = chunk.absolutePosition.toVec3f()
+        for (_x in 0 until sizeInChunks) for (_z in 0 until sizeInChunks) for (_y in 0 until heightInChunks) {
+            val chunk = get(_x, _y, _z)
+            if (chunk != null && chunk.isVisible /*&& chunk.isInFov(eye)*/) {
+                blockShader["position"] = run {
+                    val absolutePosition = Vec3f(_x * chunkSize.toFloat(), _y * chunkSize.toFloat(), _z * chunkSize.toFloat())
+                    val eyePos = eye.globalTransform.position
+                    var position = absolutePosition
+                    for (x in -1..1) for (z in -1..1) {
+                        val newPosition = Vec3f(x * sizeInVoxels.toFloat(), 0f, z * sizeInVoxels.toFloat()).apply {
+                            selfAdd(absolutePosition)
+                        }
+                        if ((newPosition - eyePos).length < (position - eyePos).length) position = newPosition
+                    }
+                    position
+                }
                 Renderer.render(chunk.mesh!!)
             }
         }
@@ -56,32 +92,21 @@ abstract class VoxelChunkMap<V : Voxel, C : VoxelChunk<V>>(name: String) : Node(
     open fun preRender(shader: Shader) {}
 
     override fun destroy() {
-        for (key in map.keys) {
-            map.remove(key)!!.destroy()
-        }
+        for (chunk in array) chunk?.destroy()
     }
 
     fun getBlock(position: Vec3i) = getBlock(position.x, position.y, position.z)
-    fun getBlock(x: Int, y: Int, z: Int): V? {
-        val smallX = if (x % chunkSize < 0) chunkSize + x % chunkSize else x % chunkSize
-        val smallY = if (y % chunkSize < 0) chunkSize + y % chunkSize else y % chunkSize
-        val smallZ = if (z % chunkSize < 0) chunkSize + z % chunkSize else z % chunkSize
-        val chunkPos = Vec3i(floor(x.toFloat() / chunkSize).toInt(), floor(y.toFloat() / chunkSize).toInt(), floor(z.toFloat() / chunkSize).toInt())
-        return this[chunkPos]?.get(smallX, smallY, smallZ)
-    }
+    fun getBlock(x: Int, y: Int, z: Int): V? =
+        this[x / chunkSize, y / chunkSize, z / chunkSize]
+            ?.get(x % chunkSize, y % chunkSize, z % chunkSize)
     fun setBlock(position: Vec3i, voxel: V?) = setBlock(position.x, position.y, position.z, voxel)
-    fun setBlock(x: Int, y: Int, z: Int, voxel: V?): C? {
-        val smallX = if (x % chunkSize < 0) chunkSize + x % chunkSize else x % chunkSize
-        val smallY = if (y % chunkSize < 0) chunkSize + y % chunkSize else y % chunkSize
-        val smallZ = if (z % chunkSize < 0) chunkSize + z % chunkSize else z % chunkSize
-        val chunkPos = Vec3i(floor(x.toFloat() / chunkSize).toInt(), floor(y.toFloat() / chunkSize).toInt(), floor(z.toFloat() / chunkSize).toInt())
-        return this[chunkPos]?.apply {
-            set(Vec3i(smallX, smallY, smallZ), voxel)
+    fun setBlock(x: Int, y: Int, z: Int, voxel: V?): C? =
+        this[x / chunkSize, y / chunkSize, z / chunkSize]?.apply {
+            set(x % chunkSize, y % chunkSize, z % chunkSize, voxel)
         }
-    }
 
     override fun collide(point: Vec3f): Boolean {
-        return getBlock(point.x.toInt(), point.y.toInt(), point.z.toInt()) != null
+        return point.y != 0f && point.y != heightInChunks - 1f && getBlock(point.x.toInt(), point.y.toInt(), point.z.toInt()) != null
     }
 
     override fun collide(boundingBox: BoundingBox): Boolean {
@@ -90,7 +115,7 @@ abstract class VoxelChunkMap<V : Voxel, C : VoxelChunk<V>>(name: String) : Node(
         val e = (origin + boundingBox.size).floorToVec3i()
 
         for (x in o.x..e.x) for (y in o.y..e.y) for (z in o.z..e.z) {
-            if (getBlock(x, y, z) != null) {
+            if (y >= 0 && y < heightInChunks * chunkSize && getBlock(clipVoxelHorizontal(x), y, clipVoxelHorizontal(z)) != null) {
                 return true
             }
         }

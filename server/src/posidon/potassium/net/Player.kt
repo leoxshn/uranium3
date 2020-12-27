@@ -1,22 +1,20 @@
 package posidon.potassium.net
 
 import posidon.library.types.Vec3f
+import posidon.library.types.Vec3i
 import posidon.potassium.Console
-import posidon.potassium.world.Worlds
-import posidon.potassium.net.packets.BlockDictionaryPacket
+import posidon.potassium.net.packets.ChunkPacket
 import posidon.potassium.net.packets.Packet
 import posidon.potassium.print
-import posidon.library.types.Vec3i
-import posidon.potassium.net.packets.ChunkPacket
 import posidon.potassium.world.Chunk
 import posidon.potassium.world.World
-import java.io.*
+import java.io.InputStream
+import java.io.OutputStream
+import java.io.OutputStreamWriter
 import java.net.Socket
 import java.net.SocketException
 import java.util.concurrent.ConcurrentLinkedQueue
-import kotlin.collections.ArrayList
 import kotlin.concurrent.thread
-import kotlin.math.roundToInt
 
 class Player(
     private val socket: Socket
@@ -42,9 +40,9 @@ class Player(
 
     private val writer = OutputStreamWriter(output, Charsets.UTF_8)
 
-    fun send(chunk: Chunk) {
-        send(ChunkPacket(chunk))
-        sentChunks.add(chunk.position)
+    fun sendChunk(chunkPos: Vec3i, chunk: Chunk) {
+        send(ChunkPacket(chunk, chunkPos))
+        sentChunks.add(chunkPos)
     }
 
     fun send(packet: Packet) {
@@ -57,6 +55,13 @@ class Player(
         catch (e: Exception) { e.print() }
     }
 
+    fun waitForPacket(): String {
+        var tmp = ""
+        do try { tmp = input.bufferedReader(Charsets.UTF_8).readLine() } catch (e: Exception) { e.print() }
+        while (!tmp.startsWith("join&") && running)
+        return tmp
+    }
+
     var world: World? = null
         set(value) {
             field?.players?.remove(this)
@@ -66,22 +71,6 @@ class Player(
         }
 
     override fun run() {
-        try {
-            var tmp = ""
-            do try { tmp = input.bufferedReader(Charsets.UTF_8).readLine() }
-            catch (e: Exception) { e.print() }
-            while (!tmp.startsWith("join&") && running)
-            send(BlockDictionaryPacket())
-            val packet = tmp.split("&")
-            playerName = packet[1]
-            id = packet[2].hashCode()
-            Players.add(this)
-            world = Worlds["terra"]
-            Console.beforeCmdLine {
-                Console.printInfo(playerName!!, " joined the server")
-            }
-        } catch (e: IOException) { e.print() }
-
         thread {
             var lastTime: Long = System.nanoTime()
             var delta = 0.0
@@ -117,21 +106,7 @@ class Player(
         }
         tickEventQueue.removeIf { it(); true }
 
-        val w = world
-        if (w != null) {
-            val loadChunks = w.loadDistance / Chunk.SIZE
-            val xx = (position.x / Chunk.SIZE).roundToInt()
-            val yy = (position.y / Chunk.SIZE).roundToInt()
-            val zz = (position.z / Chunk.SIZE).roundToInt()
-            for (x in -loadChunks..loadChunks)
-                for (y in -loadChunks..loadChunks)
-                    for (z in -loadChunks..loadChunks) {
-                        val chunkPos = Vec3i(xx + x, yy + y, zz + z)
-                        if (!sentChunks.contains(chunkPos) && chunkPos.y >= -7 && chunkPos.y <= 7) {
-                            send(w.getChunk(chunkPos))
-                        }
-                    }
-        }
+        world?.sendChunks(this)
     }
 
     fun disconnect() {
