@@ -9,7 +9,9 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
-    <orderEntry type="module" module-name="shared" />
     <orderEntry type="module" module-name="uranium" />
+    <orderEntry type="module" module-name="shared" />
+    <orderEntry type="module" module-name="sharedGameCode" />
+    <orderEntry type="module" module-name="uraniumNetApi" />
   </component>
 </module>

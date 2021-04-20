@@ -4,86 +4,65 @@ layout (binding = 0) uniform sampler2D color_buffer;
 layout (binding = 1) uniform sampler2D normal_buffer;
 layout (binding = 2) uniform sampler2D specular_buffer;
 layout (binding = 3) uniform sampler2D glow_buffer;
-layout (binding = 4) uniform sampler2D depth_buffer;
+layout (binding = 4) uniform sampler2D light_buffer;
+layout (binding = 5) uniform sampler2D depth_buffer;
 
-uniform vec3 sunNormal;
-uniform vec3 sunLight;
-
-uniform vec3 ambientLight;
-
-uniform vec3 skyColor;
+uniform float time;
 
 uniform mat4 rotation;
 uniform mat4 view;
 uniform mat4 projection;
 
+uniform ivec3 selection;
+
 out vec4 color;
 
-const float FOG_DENSITY = 0.005;
-const float FOG_GRADIENT = 3.6;
-const float FOG_START = 96;
+const float FOG_DENSITY = 0.01;
+const float FOG_GRADIENT = 2.4;
+const float FOG_START = 12;
 
-const float edge_thres = 0.012;
-const float edge_thres2 = 5.5;
+const vec3 sky_color = vec3(0.18, 0.0, 0.36);
+const vec3 sky_light = vec3(0.3, 0.3, 0.5);
+const vec3 ambient_light = vec3(0.08, 0.09, 0.1);
 
-#define HueLevCount 15
-#define SatLevCount 23
-#define ValLevCount 25
-const float[HueLevCount] HueLevels = float[] (0,20,30,45,60,90,120,140,180,210,240,270,300,330,360);
-const float[SatLevCount] SatLevels = float[] (0,.01,.02,.03,.07,.1,.15,.2,.24,.38,.45,.5,.55,.6,.65,.7,.75,.8,.85,.9,.95,.98,1);
-const float[ValLevCount] ValLevels = float[] (0,.01,.02,.03,.07,.09,.12,.18,.22,.26,.3,.35,.4,.45,.5,.55,.6,.65,.7,.75,.8,.85,.9,.95,1);
+#define LevCount (42.0)
+#define HueLevCount (36.0)
+#define skyFogMinHeight (96.0)
+
+vec3 getView (vec2 uv, float depth, mat4 invRotation, mat4 invProjection) {
+    vec4 v = invRotation * invProjection * vec4(uv * 2.0 - 1.0, depth, 1.0);
+    return v.xyz / -v.w;
+}
 
 vec3 positiveMix (vec3 a, vec3 b) { return vec3(max(a.x, b.x), max(a.y, b.y), max(a.z, b.z)); }
 
-float nearestLevel (float col, int mode) {
-    int levCount;
-    if (mode == 0) levCount = HueLevCount;
-    if (mode == 1) levCount = SatLevCount;
-    if (mode == 2) levCount = ValLevCount;
-
-    for (int i = 0; i < levCount - 1; i++) {
-        if (mode == 0) {
-            if (col >= HueLevels[i] && col <= HueLevels[i+1]) {
-                return HueLevels[i+1];
-            }
-        }
-        if (mode == 1) {
-            if (col >= SatLevels[i] && col <= SatLevels[i+1]) {
-                return SatLevels[i+1];
-            }
-        }
-        if (mode == 2) {
-            if (col >= ValLevels[i] && col <= ValLevels[i+1]) {
-                return ValLevels[i+1];
-            }
-        }
-    }
-}
-
 float isEdge (vec2 coords) {
-    float dxtex = 1.0 / float(textureSize(depth_buffer, 0).x);
-    float dytex = 1.0 / float(textureSize(depth_buffer, 0).y);
-    float pix[9];
+    vec2 ts = textureSize(normal_buffer, 0);
+    float dxtex = 1.0 / float(ts.x);
+    float dytex = 1.0 / float(ts.y);
+    vec4 pix[9];
     int k = -1;
-    float delta;
 
     // read neighboring pixel intensities
     for (int i = -1; i < 2; i++) {
         for(int j = -1; j < 2; j++) {
             k++;
-            pix[k] = texture(depth_buffer, coords + vec2(float(i)*dxtex, float(j)*dytex)).x;
+            vec2 uv = coords + vec2(float(i)*dxtex, float(j)*dytex);
+            pix[k] = vec4(texture(normal_buffer, uv).rgb, texture(depth_buffer, uv).r);
         }
     }
 
     // average color differences around neighboring pixels
-    delta = (
+    vec4 multi_delta = (
         abs(pix[1] - pix[7]) +
         abs(pix[5] - pix[3]) +
         abs(pix[0] - pix[8]) +
         abs(pix[2] - pix[6])
     ) / 4.0;
 
-    return clamp(edge_thres2 * delta, 0.0, 1.0);
+    float delta = multi_delta.w + max(max(multi_delta.x, multi_delta.y), multi_delta.z) * 0.1;
+
+    return clamp(5.0 * delta, 0.0, 1.0);
 }
 
 float doAmbientOcclusion (vec2 tcoord, vec2 uv, vec3 p, vec3 cnorm) {
@@ -122,126 +101,160 @@ float ambientOcclusion(vec2 uv) {
     return 1.0 - ao;
 }
 
-vec3 godrays(
-    float density,
-    float weight,
-    float decay,
-    vec2 screenSpaceLightPos,
-    vec2 uv,
-    vec3 sun
-) {
-    const int numSamples = 28;
-    vec3 fragColor = vec3(0.0);
+float getVisibility (float distance) {
+    return min(exp(-pow(max(distance - FOG_START, 0.0) * FOG_DENSITY, FOG_GRADIENT)), 1.0);
+}
 
-    vec2 deltaTextCoord = vec2(uv - screenSpaceLightPos.xy);
-
-    vec2 textCoo = uv.xy;
-    deltaTextCoord *= (1.0 / float(numSamples)) * density;
-    float illuminationDecay = 1.0;
-
-    for (int i = 0; i < numSamples; i++) {
-        textCoo -= deltaTextCoord;
-        vec3 samp = texture2D(depth_buffer, textCoo).x == 1.0 ? sun : vec3(0.0);
-        samp *= illuminationDecay * weight;
-        fragColor += samp;
-        illuminationDecay *= decay;
+float texh(in vec3 p, in float str) {
+    p *= .7; //Scale p
+    float rz = 1.0;
+    for (int i = 0; i < 10; i++) {
+        float g = pow(open_simplex_bcc_base(vec3(.025, .5, .5) * p).a, 1.0);
+        g = smoothstep(0.0 - str * 0.1, 2.3 - str * 0.1, g);
+        rz = min(1.0 - g, rz);
+        p.xyz = p.yzx;
+        p += .07;
+        p *= 1.2;
+        if (float(i) > str) break;
     }
+    return rz*1.05;
+}
 
-    return texture2D(depth_buffer, uv).x == 1.0 ? positiveMix(sun, fragColor) : fragColor;
+float starsBase (vec3 vecToEye) {
+    vec2 resolution = textureSize(color_buffer, 0);
+
+    float stars = max(0, random(ivec2(vecToEye.xz * (resolution.y * 0.8))) * 8.0 - 7.0);
+    if (stars <= 0.99) return 0.0;
+    stars *= max(0, min(1, vecToEye.y * 1.2 - 0.2));
+    stars *= 0.5 + max(-0.5, open_simplex_bcc_plane_first(vec3(vecToEye.xz * 40, time / 2000)).a);
+    return stars;
+}
+
+float glitter (vec3 vecToEye) {
+    vec2 resolution = textureSize(color_buffer, 0);
+
+    float stars = max(0, random(ivec2(vecToEye.xz * resolution.y)) * 8.0 - 7.0);
+    if (stars <= 0.9) return 0.0;
+    stars *= max(0, min(1, vecToEye.y * 1.2 - 0.2));
+    stars *= 0.5 + max(-0.5, open_simplex_bcc_plane_first(vec3(vecToEye.xz * 12, time / 4800)).a);
+    stars *= abs(open_simplex_bcc_plane_first(vec3(vecToEye.xz * 96, time / 960)).a);
+    return stars;
+}
+
+float stars (vec3 vecToEye, vec2 uv) {
+    vec2 resolution = textureSize(color_buffer, 0);
+
+    const float r = resolution.y / 100.0;
+    const float a = 1.0 / resolution.y;
+    const float w = 0.9;
+    const float e = 0.5;
+
+    float s = starsBase(vecToEye);
+
+    const float rr = r * a;
+    const float xa = resolution.y / resolution.x * a;
+    const float rrx = r * xa;
+
+    mat4 ir = inverse(rotation);
+    mat4 ip = inverse(projection);
+    float ww = w;
+
+    for (float x = xa; x < rrx; x += xa) {
+        s += starsBase(-normalize(
+            getView(vec2(uv.x + x, uv.y), 1.0, ir, ip)
+        )) * ww;
+        s += starsBase(-normalize(
+            getView(vec2(uv.x - x, uv.y), 1.0, ir, ip)
+        )) * ww;
+        ww *= e;
+    }
+    ww = w;
+    for (float y = a; y < rr; y += a) {
+        s += starsBase(-normalize(
+            getView(vec2(uv.x, uv.y + y), 1.0, ir, ip)
+        )) * ww;
+        s += starsBase(-normalize(
+            getView(vec2(uv.x, uv.y - y), 1.0, ir, ip)
+        )) * ww;
+        ww *= e;
+    }
+    return s;
 }
 
 vec3 renderPixel (vec2 uv) {
-    vec3 color = vec3(0.0);
-    vec3 albedo = texture(color_buffer, uv).rgb;
+    vec3 color = texture(color_buffer, uv).rgb;
     vec3 normal = texture(normal_buffer, uv).rgb * 2.0 - 1.0;
     vec3 specular = texture(specular_buffer, uv).rgb;
+    vec3 light = texture(light_buffer, uv).rgb;
     float depth = texture(depth_buffer, uv).x;
 
-    color = texture(color_buffer, uv).rgb;
+    vec2 resolution = textureSize(color_buffer, 0);
+    float aspectRatio = resolution.y / resolution.x;
 
     vec3 v = getView(uv, depth, inverse(rotation), inverse(projection));
-
-    if (length(normal) != 0) {
-        /// LIGHTING
-        float s = (dot(reflect(-sunNormal, normal), normalize(v)) / 2 + 0.5);
-        vec3 specularLight = sunLight * specular.r * 2 * pow(s, specular.b * 4);
-        vec3 directionalLight = sunLight * (dot(sunNormal, normal) / 2 + 0.5);
-        color = color * positiveMix(ambientLight, directionalLight) + specularLight;
-    }
+    vec3 nv = normalize(v);
 
     float edge = isEdge(uv);
 
-    { // Toonify
-        vec3 tmp = vec3(min(color.x, 1.0), min(color.y, 1.0), min(color.z, 1.0));
-        vec3 vHSV = RGBtoHSV(tmp.r, tmp.g, tmp.b);
-        vHSV.x = nearestLevel(vHSV.x, 0);
-        vHSV.y = nearestLevel(vHSV.y, 1);
-        vHSV.z = nearestLevel(vHSV.z, 2);
-        if (edge >= edge_thres) {
-            vHSV.y *= 2.0;
-            vHSV.z = pow(vHSV.z, 1.8);
-        }
-        color = HSVtoRGB(vHSV.x, vHSV.y, vHSV.z);
-    }
+    vec4 world = inverse(view) * inverse(projection) * vec4(vec3(uv, depth) * 2.0 - 1.0, 1.0);
+    world.xyz /= world.w;
+    vec3 block = ivec3(world.xyz);
 
-    { // AO (blurred)
-        vec2 res = textureSize(glow_buffer, 0);
-        float aspectRatio = res.y / res.x;
-        float c = ambientOcclusion(uv);
-        c += ambientOcclusion(uv + vec2(aspectRatio, 1.0) / res.y);
-        c += ambientOcclusion(uv + vec2(-aspectRatio, 1.0) / res.y);
-        c += ambientOcclusion(uv + vec2(aspectRatio, -1.0) / res.y);
-        c += ambientOcclusion(uv + vec2(-aspectRatio, -1.0) / res.y);
-        color = mix(color, color * c / 5, 0.5);
-    }
-
-    /*{ // Bloom
-        int radius = 4;
-        vec4 c = texture(glow_buffer, uv);
-        vec2 res = textureSize(glow_buffer, 0);
-        float aspectRatio = res.y / res.x;
-        int i = 1;
-        for (int x = 1; x < radius; x++) {
-            for (int y = 1; y < radius; y++) {
-                c += texture(glow_buffer, uv + vec2(x * aspectRatio, y) / 480);
-                c += texture(glow_buffer, uv + vec2(-x * aspectRatio, y) / 480);
-                c += texture(glow_buffer, uv + vec2(x * aspectRatio, -y) / 480);
-                c += texture(glow_buffer, uv + vec2(-x * aspectRatio, -y) / 480);
-                i += 4;
-            }
+    if (depth != 1.0) {
+        if (block == selection) {
+            color += edge * 6.0;
+        } else if (edge >= 0.008) {
+            color *= 1.0 - edge;
         }
-        color += c.rgb / i * .8;
-    }*/
+        if (length(normal) != 0.0) {
+            /// LIGHTING
+            float fresnel = pow(max(0, min(0.8, (1.0 - dot(nv, normal)) * 0.5)), 3.14);
+
+            // Diffuse
+            vec3 directional_light = sky_light * (dot(vec3(0.0, 1.0, 0.0), normal) / 2 + 0.5);
+            vec3 diffuse_light = positiveMix(ambient_light + directional_light, light) * (1 - fresnel);
+
+            // Specular (texture: r = intensity, b = smoothness)
+            float s = (dot(reflect(vec3(0.0, -1.0, 0.0), normal), nv) / 2 + 0.5);
+            vec3 specular_color = positiveMix(light, sky_light);
+            vec3 specular_light = specular_color * specular.r * 2 * pow(s, specular.b * 4) * (1 + fresnel);
+
+            color = color * diffuse_light + specular_light;
+        }
+        color = mix(color, color * ambientOcclusion(uv), 1.0);
+    }
 
     if (depth != 0.0) {
         /// FOG
-        float visibility = min(exp(-pow(max(length(v) - FOG_START, 0.0) * FOG_DENSITY, FOG_GRADIENT)), 1.0);
+        const float distance = length(v);
+        const float visibility = getVisibility(distance);
+        const vec3 vecToEye = -nv;
 
-        vec3 vecToEye = -normalize(v);
-        vec3 sunMixVector = normalize(mix(sunNormal, vec3(0.0, -1.0, 0.0), 0.9));
+        if (block.y >= skyFogMinHeight) {
+            vec3 fog_start = vec3(0.36, 0.0, 0.75);
+            vec3 fog_end = mix(vec3(0.32, 0.28, 0.75), sky_color, max(vecToEye.y, 0));
+            float fog_far = clamp((distance - FOG_START - 24) / 192, 0.0, 1.0);
+            vec3 fog_color = mix(fog_start, fog_end, fog_far);
+            vec3 fog = fog_color * min(block.y - skyFogMinHeight, 5.0) / 5.0;
+            float invisibility = (1 - visibility);
+            color = mix(fog, color, visibility);
 
-        float sunsetity = 1 - dot(vec3(0.0, 1.0, 0.0), abs(sunNormal));
-        float sunity = max(dot(vecToEye, sunNormal) / 2 + 0.5, 0.0);
-        float mixedSunity = min(dot(vecToEye, sunMixVector), 0.0) + 1.0;
+            if (depth == 1.0) {
+                color += stars(vecToEye, uv);
+                color += glitter(vecToEye);
+            }
 
-        vec3 haloColor = vec3(0.57, 0.24, 0.1);
-        vec3 sky = mix(skyColor, positiveMix(skyColor, haloColor), pow(mixedSunity, 6 - sunsetity * 4) * pow(sunsetity, 3) / 2.8);
-        vec3 halo = pow(sunity, 5 - sunsetity * 4) * sqrt(sunsetity * 4) / 2 * haloColor;
-
-        color = mix(positiveMix(sky, halo), color, visibility);
-
-        color = mix(color, color * sky, clamp(edge * 72, 0.0, 1.0) * (1 - visibility));
-
-        vec4 screenSpaceSunPos = (projection * (rotation * vec4(sunNormal, 1.0)));
-        screenSpaceSunPos.xyz = screenSpaceSunPos.xyz / screenSpaceSunPos.w / 2.0 + 0.5;
-
-        vec3 sun = vec3(pow(sunity, 35.0) * 2.4, pow(sunity, 47.0) * 2.1, pow(sunity, 57.0) * 2);
-        color += godrays(0.85, 0.06, 0.98, screenSpaceSunPos.xy, uv, sun) * max(sqrt(screenSpaceSunPos.z), 0.0) / 2.0;
+            color = mix(color, color * fog, pow(edge, 2.0) * invisibility * 0.8);
+        } else {
+            color = mix(vec3(0.0), color, visibility);
+        }
     }
 
     return color;
 }
 
+const highp float NOISE_GRANULARITY = 0.5/255.0;
+
 void main () {
-    color = vec4(renderPixel(uv), 1.0);
+    color = vec4(renderPixel(uv) + mix(-NOISE_GRANULARITY, NOISE_GRANULARITY, random(uv)), 1.0);
 }
